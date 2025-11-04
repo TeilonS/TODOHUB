@@ -33,4 +33,9 @@ if (document.readyState === 'loading') {
 } else {
   Theme.init();
 }
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', Theme.init);
+} else {
+  Theme.init();
+}
 
