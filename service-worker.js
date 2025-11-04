@@ -1,7 +1,7 @@
 /* service-worker.js
    Cache estático simples (Network falling back to Cache)
 */
-const CACHE = 'todohub-v5';
+const CACHE = 'todohub-v6';
 const ASSETS = [
   './',
   './index.html',
