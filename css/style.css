@@ -1,0 +1,370 @@
+/* ===========================
+   TodoHub — Estilos principais
+   Semântica: Dark/Light via data-theme em <html>
+   =========================== */
+
+:root {
+  --bg: #0d1117;
+  --bg-soft: #121826;
+  --card: #0f172a;
+  --text: #e9eef5;              /* texto principal mais claro */
+  --muted: #b0bac7;             /* texto secundário */
+  --input-text: #ffffff;        /* texto dentro dos inputs */
+  --primary: #00bcd4;
+  --primary-strong: #00a2b7;
+  --outline: #1f2937;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --shadow: rgba(0,0,0,0.35);
+  --radius: 14px;
+}
+
+/* garante que textos de campos e botões fiquem visíveis */
+input, button, .btn, .input {
+  color: var(--input-text);
+}
+
+
+html[data-theme="light"] {
+  --bg: #f7fafc;
+  --bg-soft: #eef2f7;
+  --card: #ffffff;
+  --text: #0f172a;          /* texto principal bem escuro */
+  --muted: #334155;         /* subtítulos mais legíveis */
+  --primary: #0ea5e9;
+  --primary-strong: #0284c7;
+  --outline: #e2e8f0;
+  --shadow: rgba(0,0,0,0.08);
+}
+
+/* Header no tema claro: gradiente suave + tipografia visível */
+html[data-theme="light"] .app-header {
+  background: linear-gradient(180deg, #1f2937 0%, rgba(31,41,55,0.45) 55%, transparent 100%);
+  border-bottom: 1px solid rgba(31,41,55,0.15);
+}
+.brand-text h1 { color: var(--text); }
+.brand-text small { color: var(--muted); opacity: 0.95; }
+
+/* Botões do topo no tema claro (contraste e borda) */
+html[data-theme="light"] .icon-btn,
+html[data-theme="light"] .user-chip {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(0,188,212,0.08), transparent),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg) 60%, var(--bg) 100%);
+  background-attachment: fixed;
+}
+
+/* Acessibilidade */
+.sr-only { position: absolute; left: -9999px; }
+
+/* Header */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(15,23,42,0.6));
+  border-bottom: 1px solid var(--outline);
+  position: sticky; top: 0; z-index: 10;
+  backdrop-filter: blur(10px);
+}
+
+.brand { display: flex; gap: 12px; align-items: center; }
+.brand-icon { font-size: 26px; }
+.brand-text h1 { font-size: 20px; margin: 0; }
+.brand-text small { color: var(--muted); }
+
+.header-actions { display: flex; gap: 10px; align-items: center; }
+
+.icon-btn {
+  background: var(--card); color: var(--text);
+  border: 1px solid var(--outline);
+  padding: 8px 10px; border-radius: 12px;
+  cursor: pointer; transition: transform .15s ease, background .2s ease;
+}
+.icon-btn:hover { transform: translateY(-1px); }
+
+.user-menu { position: relative; }
+.user-chip {
+  display:flex; align-items:center; gap:10px;
+  background: var(--card); border:1px solid var(--outline);
+  padding: 6px 10px; border-radius: 999px; cursor:pointer;
+}
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display:grid; place-items:center; font-weight:700; color:#0b1117; }
+.avatar.lg { width: 42px; height: 42px; }
+.user-name { max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.user-dropdown {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  width: 260px; background: var(--card); border: 1px solid var(--outline);
+  border-radius: 14px; padding: 8px; box-shadow: 0 10px 30px var(--shadow);
+  opacity: 0; transform: translateY(-6px); pointer-events: none; transition: .15s ease;
+}
+.user-dropdown.open { opacity: 1; transform: translateY(0); pointer-events: all; }
+.user-dropdown-head { display:flex; gap:10px; align-items:center; padding:6px; }
+.dropdown-item {
+  width: 100%; text-align: left; background: transparent; color: var(--text);
+  border: 1px solid transparent; border-radius: 10px; padding: 10px; cursor: pointer;
+}
+.dropdown-item:hover { background: var(--bg-soft); border-color: var(--outline); }
+.dropdown-item.danger { color: #ff6b6b; }
+
+/* Container */
+.container { max-width: 1100px; margin: 26px auto; padding: 0 16px; }
+
+/* Cards de estatística */
+.stats { display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.stat-card {
+  display:flex; align-items:center; gap:14px; padding: 16px;
+  background: var(--card); border:1px solid var(--outline);
+  border-radius: var(--radius);
+  transition: transform .15s ease, box-shadow .2s ease;
+  box-shadow: 0 6px 16px var(--shadow);
+}
+.stat-card:hover { transform: translateY(-2px); }
+.stat-icon { font-size: 22px; }
+.stat-title { color: var(--muted); font-size: 14px; }
+.stat-number { font-weight: 700; font-size: 22px; }
+
+/* Adicionar tarefa */
+.add-task { display:flex; gap:10px; align-items:center; margin: 18px 0; }
+.input {
+  flex:1; background: var(--card); color: var(--text);
+  border:1px solid var(--outline); border-radius: 12px;
+  padding: 12px 14px; outline: none; transition: border .15s ease, box-shadow .15s ease;
+}
+.input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,188,212,.15); }
+
+.btn {
+  border:1px solid var(--outline); background: var(--card); color: var(--text);
+  border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: .15s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn.primary { background: linear-gradient(90deg, var(--primary), var(--primary-strong)); border-color: transparent; color: #001014; font-weight: 700; }
+
+/* Toolbar */
+.toolbar { display:flex; justify-content: space-between; align-items: center; gap:10px; }
+.filters { display:flex; gap:8px; flex-wrap:wrap; }
+.chip {
+  padding: 8px 12px; border-radius: 999px;
+  border:1px solid var(--outline); background: var(--card); color: var(--text);
+  cursor:pointer; transition: .15s ease;
+}
+.chip.active, .chip:hover { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,188,212,.12); }
+
+.search { display:flex; align-items:center; gap:8px; background: var(--card); border:1px solid var(--outline); border-radius: 12px; padding: 8px 12px; }
+
+/* Lista de tarefas */
+.card {
+  background: var(--card); border:1px solid var(--outline);
+  border-radius: var(--radius); box-shadow: 0 10px 24px var(--shadow);
+  margin-top: 16px; overflow: hidden;
+}
+
+.list { list-style: none; margin: 0; padding: 0; }
+.item {
+  display:grid; grid-template-columns: 28px 1fr auto; align-items:center; gap: 12px;
+  padding: 12px 14px; border-bottom: 1px solid var(--outline); animation: fadeIn .2s ease;
+}
+.item:last-child { border-bottom: none; }
+
+/* Checkbox APENAS das tarefas */
+.item .check {
+  appearance: none;
+  width: 20px; height: 20px; border-radius: 6px;
+  border:1px solid var(--outline); background: var(--bg-soft);
+  display:grid; place-items:center; cursor:pointer; transition:.15s ease;
+}
+.item .check:checked { background: var(--success); border-color: var(--success); }
+.item .check:checked::after { content:"✔"; color:#0b1117; font-size:14px; }
+
+.item-text { word-break: break-word; }
+.item.done .item-text { text-decoration: line-through; opacity: 0.6; }
+
+.item-actions { display:flex; gap:6px; }
+.icon {
+  border:1px solid var(--outline); background: transparent; color: var(--text);
+  border-radius: 10px; padding: 6px 8px; cursor:pointer; transition:.15s ease;
+}
+.icon:hover { background: var(--bg-soft); }
+.icon.danger { color: #ff6b6b; border-color: #ff6b6b44; }
+.icon.danger:hover { background: #ff6b6b22; }
+
+/* Estado vazio */
+.empty { text-align:center; padding: 36px 16px; display: none; }
+.empty-icon { font-size: 36px; margin-bottom: 8px; }
+.muted { color: var(--muted); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--card); border:1px solid var(--outline); color: var(--text);
+  border-radius: 12px; padding: 10px 14px; box-shadow: 0 14px 32px var(--shadow);
+  opacity: 0; pointer-events: none; transition: .2s ease;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Footer */
+.app-footer { text-align:center; color: var(--muted); padding: 28px 12px; }
+
+/* Login dialog */
+.login-dialog::backdrop { background: rgba(0,0,0,0.5); }
+.login-dialog .card { width: min(420px, 92vw); padding: 18px; }
+.field { display:flex; flex-direction:column; gap:6px; margin: 10px 0; }
+.field input { background: var(--bg-soft); border:1px solid var(--outline); border-radius: 10px; padding: 10px; color: var(--text); }
+.check { margin-top: 6px; }
+.actions { display:flex; justify-content:flex-end; gap:10px; margin-top: 10px; }
+.actions .primary { background: var(--primary); color: #001014; border: none; }
+
+/* Responsividade */
+@media (max-width: 800px) {
+  .stats { grid-template-columns: 1fr; }
+  .toolbar { flex-direction: column; align-items: stretch; }
+}
+
+/* Animações */
+@keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+@keyframes fadeOut { to { opacity:0; height:0; padding-top:0; padding-bottom:0; margin:0; } }
+.hidden { display: none !important; }
+
+/* ---------- Ajustes no diálogo de login ---------- */
+.login-dialog .card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--card);
+  color: var(--text);
+  border-radius: 16px;
+  border: 1px solid var(--outline);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+
+.login-dialog h2 {
+  margin: 4px 0 8px;
+  text-align: center;
+  font-size: 1.3rem;
+}
+
+.login-dialog .field span {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.login-dialog input {
+  background: var(--bg-soft);
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  padding: 10px;
+  color: var(--input-text);
+}
+
+.login-dialog input:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0,188,212,0.25);
+}
+
+.login-dialog menu.actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.login-dialog .muted {
+  color: var(--muted);
+  text-align: center;
+  margin-top: 8px;
+  font-size: 0.8rem;
+}
+
+.login-dialog button.primary {
+  background: var(--primary);
+  color: #001014;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+/* ---- Modal de login (layout & contraste) ---- */
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  user-select: none;
+}
+.form-check span { color: var(--text); }
+
+.login-dialog .card {
+  display: flex; flex-direction: column; gap: 10px;
+  background: var(--card); color: var(--text);
+  border: 1px solid var(--outline); border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+.login-dialog h2 { margin: 4px 0 8px; text-align: center; font-size: 1.3rem; }
+.login-dialog .field span { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+.login-dialog input {
+  background: var(--bg-soft); border: 1px solid var(--outline);
+  border-radius: 10px; padding: 10px; color: var(--input-text, #fff);
+}
+.login-dialog input::placeholder { color: var(--muted); }
+.login-dialog input:focus {
+  border-color: var(--primary); outline: none;
+  box-shadow: 0 0 0 2px rgba(0,188,212,0.25);
+}
+.login-dialog menu.actions {
+  margin-top: 12px; display: flex; justify-content: flex-end; gap: 10px;
+}
+.login-dialog menu.actions button[value="cancel"] {
+  background: transparent; color: var(--text);
+  border: 1px solid var(--outline); border-radius: 10px; padding: 8px 12px;
+}
+.login-dialog menu.actions .primary {
+  background: var(--primary); color: #001014; font-weight: 700;
+  border: none; border-radius: 10px; padding: 8px 12px;
+}
+.login-dialog .muted { color: var(--muted); text-align: center; margin-top: 6px; font-size: .85rem; }
+
+/* Checkbox nativo do modal de login */
+.form-check {
+  display:flex; align-items:center; gap:10px; margin-top:8px; user-select:none;
+}
+.form-check .native-check { width:18px; height:18px; }
+.form-check label { color: var(--text); cursor:pointer; }
+
+/* Botões do modal de login */
+.login-dialog menu.actions {
+  margin-top:12px; display:flex; justify-content:flex-end; gap:10px;
+}
+.login-dialog menu.actions button[value="cancel"] {
+  background: transparent;
+  color: var(--text);
+  border:1px solid var(--outline);
+  border-radius:10px; padding:8px 12px;
+}
+
+/* Tema claro: o cancel ganha fundo branco para não “sumir” */
+html[data-theme="light"] .login-dialog menu.actions button[value="cancel"] {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #e2e8f0;
+}
+
+.login-dialog menu.actions .primary {
+  background: var(--primary);
+  color: #001014;
+  font-weight: 700;
+  border: none; border-radius: 10px; padding: 8px 12px;
+}
