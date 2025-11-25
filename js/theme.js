@@ -1,41 +1,38 @@
-/* theme.js
-   Alterna Dark/Light e persiste preferência no LocalStorage.
-*/
+/* theme.js — Controle de Tema Dark/Light */
 
-const Theme = (() => {
-  const THEME_KEY = 'theme';
+import { Storage } from "./storage.js";
+
+export const Theme = (() => {
+
+  const KEY = "theme";
 
   const apply = (theme) => {
-    document.documentElement.setAttribute('data-theme', theme);
-    const themeIcon = document.getElementById('themeIcon');
-    if (themeIcon) themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
-    Storage.setPref(THEME_KEY, theme);
+    document.documentElement.setAttribute("data-theme", theme);
+
+    const icon = document.getElementById("themeIcon");
+    if (icon) {
+      // Ícone indica para onde vai mudar
+      icon.textContent = theme === "dark" ? "☀️" : "🌙";
+    }
+
+    Storage.setPref(KEY, theme);
   };
 
   const toggle = () => {
-    const current = get();
-    apply(current === 'dark' ? 'light' : 'dark');
+    const next = get() === "dark" ? "light" : "dark";
+    apply(next);
   };
 
-  const get = () => Storage.getPref(THEME_KEY) || 'dark';
+  const get = () => Storage.getPref(KEY) || "dark";
 
   const init = () => {
     apply(get());
-    const btn = document.getElementById('themeToggle');
-    btn?.addEventListener('click', toggle);
+    document.getElementById("themeToggle")?.addEventListener("click", toggle);
   };
 
-  return { init, apply, toggle, get };
+  return { init, toggle, get };
+
 })();
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', Theme.init);
-} else {
-  Theme.init();
-}
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', Theme.init);
-} else {
-  Theme.init();
-}
-
+/* Inicializa */
+document.addEventListener("DOMContentLoaded", Theme.init);

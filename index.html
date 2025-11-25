@@ -1,112 +1,128 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TodoHub — Lista de Tarefas</title>
 
-  <!-- Paleta para mobile UI -->
+  <!-- Cor da UI no mobile -->
   <meta name="theme-color" content="#00bcd4" />
 
-  <!-- Manifest PWA -->
+  <!-- Manifest (PWA) -->
   <link rel="manifest" href="manifest.json" />
 
   <!-- Fonte moderna -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <link rel="icon" href="assets/icons/icon-192.png" />
-  <link rel="stylesheet" href="css/style.css" />
+  <!-- Ícone da aba -->
+  <link rel="icon" href="./assets/logo/LogoTodoHub.png" type="image/png" />
+
+  <!-- CSS principal -->
+  <link rel="stylesheet" href="./css/style.css" />
 </head>
+
 <body>
-  <!-- Header / Navbar -->
+
+  <!-- Loader -->
+  <div id="appLoader">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Toasts -->
+  <div id="toastStack"></div>
+
+  <!-- HEADER MINIMALISTA -->
   <header class="app-header" role="banner">
+
+    <!-- 🔥 Logo minimalista -->
     <div class="brand">
-      <span class="brand-icon" aria-hidden="true">📝</span>
-      <div class="brand-text">
-        <h1>TodoHub</h1>
-        <small>Mantenha-se organizado, mantenha-se produtivo</small>
-      </div>
+      <img src="./assets/logo/LogoTodoHub.png" alt="TodoHub logo" class="brand-logo">
     </div>
 
+    <!-- Ações (tema e usuário) -->
     <div class="header-actions">
       <button id="themeToggle" class="icon-btn" aria-label="Alternar tema">
         <span id="themeIcon">🌙</span>
       </button>
 
-      <div id="userMenu" class="user-menu" aria-label="Menu do usuário">
-        <button id="userButton" class="user-chip" aria-haspopup="true" aria-expanded="false">
+      <div id="userMenu" class="user-menu">
+        <button id="userButton" class="user-chip">
           <span id="userAvatar" class="avatar">?</span>
-          <span id="userName" class="user-name">Convidado</span>
         </button>
-        <div class="user-dropdown" id="userDropdown" role="menu" aria-hidden="true">
+
+        <div id="userDropdown" class="user-dropdown" aria-hidden="true">
           <div class="user-dropdown-head">
-            <div class="avatar lg" id="userAvatarLg">?</div>
+            <div id="userAvatarLg" class="avatar lg">?</div>
             <div>
               <div id="userDropdownName">Convidado</div>
               <small id="userDropdownEmail">-</small>
             </div>
           </div>
           <hr>
-          <button id="openLogin" class="dropdown-item" role="menuitem">Trocar usuário</button>
-          <button id="logoutBtn" class="dropdown-item danger" role="menuitem">Sair</button>
+          <button id="openLogin" class="dropdown-item">Trocar usuário</button>
+          <button id="logoutBtn" class="dropdown-item danger">Sair</button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Login (simples, local) -->
+  <!-- Login Modal -->
   <dialog id="loginDialog" class="login-dialog">
     <form id="loginForm" method="dialog" class="card">
       <h2>Entrar no TodoHub</h2>
+
       <label class="field">
         <span>Nome</span>
-        <input type="text" id="loginName" placeholder="Seu nome" required />
+        <input type="text" id="loginName" required placeholder="Seu nome" />
       </label>
+
       <label class="field">
         <span>E-mail</span>
-        <input type="email" id="loginEmail" placeholder="voce@email.com" required />
+        <input type="email" id="loginEmail" required placeholder="email@exemplo.com" />
       </label>
 
-     <div class="form-check">
-  <input type="checkbox" id="allowCollab" class="native-check" />
-  <label for="allowCollab">Permitir colaboração (futuro)</label>
-</div>
-
-
+      <div class="form-check">
+        <input type="checkbox" id="allowCollab" class="native-check" />
+        <label for="allowCollab">Permitir colaboração (futuro)</label>
+      </div>
 
       <menu class="actions">
         <button value="cancel">Cancelar</button>
         <button type="submit" class="primary">Entrar</button>
       </menu>
+
       <small class="muted">
-        * Autenticação simulada (sem backend). Seus dados ficam apenas neste navegador.
+        * Seus dados ficam apenas neste navegador (login local).
       </small>
     </form>
   </dialog>
 
-  <!-- Conteúdo principal -->
+  <!-- CONTEÚDO PRINCIPAL -->
   <main class="container">
-    <!-- Cards de métricas -->
-    <section class="stats" aria-label="Indicadores">
-      <article class="stat-card" aria-live="polite">
-        <div class="stat-icon">🗂️</div>
+
+    <!-- Indicadores -->
+    <section class="stats">
+      <article class="stat-card">
+        <div class="stat-icon">📋</div>
         <div>
-          <div class="stat-title">Total de tarefas</div>
+          <div class="stat-title">Total</div>
           <div id="totalCount" class="stat-number">0</div>
         </div>
       </article>
-      <article class="stat-card" aria-live="polite">
+
+      <article class="stat-card">
         <div class="stat-icon">🟦</div>
         <div>
-          <div class="stat-title">Ativo</div>
+          <div class="stat-title">Ativas</div>
           <div id="activeCount" class="stat-number">0</div>
         </div>
       </article>
-      <article class="stat-card" aria-live="polite">
+
+      <article class="stat-card">
         <div class="stat-icon">✅</div>
         <div>
-          <div class="stat-title">Concluído</div>
+          <div class="stat-title">Concluídas</div>
           <div id="doneCount" class="stat-number">0</div>
         </div>
       </article>
@@ -114,53 +130,49 @@
 
     <!-- Adicionar tarefa -->
     <section class="add-task">
-      <label class="sr-only" for="taskInput">O que precisa ser feito?</label>
-      <input id="taskInput" class="input" type="text" placeholder="O que precisa ser feito?" />
-      <button id="addTaskBtn" class="btn primary">
-        <span>+</span> Adicionar tarefa
+      <input id="taskInput" class="input" type="text" placeholder="O que precisa ser feito?" data-task-input />
+      <button id="addTaskBtn" class="btn primary" data-add-task>
+        + Adicionar
       </button>
     </section>
 
     <!-- Filtros e busca -->
     <section class="toolbar">
-      <div class="filters" role="tablist" aria-label="Filtros">
-        <button class="chip active" data-filter="all" role="tab" aria-selected="true">Todos</button>
-        <button class="chip" data-filter="active" role="tab" aria-selected="false">Ativo</button>
-        <button class="chip" data-filter="done" role="tab" aria-selected="false">Concluído</button>
+      <div class="filters">
+        <button class="chip active" data-filter="all">Todos</button>
+        <button class="chip" data-filter="active">Ativas</button>
+        <button class="chip" data-filter="done">Concluídas</button>
       </div>
+
       <div class="search">
-        <span aria-hidden="true">🔎</span>
-        <label class="sr-only" for="searchInput">Buscar tarefas</label>
-        <input id="searchInput" class="input" type="search" placeholder="Buscar tarefas..." />
+        <span>🔎</span>
+        <input id="searchInput" class="input" type="search" placeholder="Buscar..." data-search />
       </div>
     </section>
 
     <!-- Lista de tarefas -->
-    <section class="task-list card" aria-live="polite" aria-label="Lista de tarefas">
+    <section class="task-list card">
       <ul id="taskList" class="list"></ul>
-
-      <!-- Estado vazio -->
       <div id="emptyState" class="empty">
         <div class="empty-icon">🗒️</div>
-        <h3>Ainda não há tarefas. Adicione uma para começar!</h3>
-        <p class="muted">Suas tarefas aparecerão aqui.</p>
+        <h3>Nenhuma tarefa.</h3>
+        <p class="muted">Adicione uma para começar!</p>
       </div>
     </section>
   </main>
 
-  <!-- Toast simples -->
-  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-
+  <!-- Rodapé -->
   <footer class="app-footer">
     <small>© <span id="year"></span> TodoHub — Teilon Oliveira Santos</small>
   </footer>
 
-  <!-- Scripts -->
-<script src="./js/storage.js" defer></script>
-<script src="./js/theme.js" defer></script>
-<script src="./js/auth.js" defer></script>
-<script src="./js/main.js" defer></script>
-<script src="./js/sw-register.js" defer></script>
+  <!-- Scripts na ordem correta -->
+  <script src="./js/storage.js" type="module"></script>
+  <script src="./js/theme.js" type="module"></script>
+  <script src="./js/auth.js" type="module"></script>
+  <script src="./js/ui.js" type="module"></script>
+  <script src="./js/main.js" type="module"></script>
+  <script src="./js/sw-register.js" type="module"></script>
 
 </body>
 </html>

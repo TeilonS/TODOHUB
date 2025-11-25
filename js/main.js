@@ -1,212 +1,241 @@
-/* main.js
-   Regras do To-Do: CRUD, filtros, busca, contadores, toasts, acessibilidade.
-*/
+/* main.js — CRUD, filtros, busca, atalhos e integração total */
 
-const Main = (() => {
-  // Estado em memória (renderização rápida)
+import { Storage } from "./storage.js";
+import { UI } from "./ui.js";
+import { Theme } from "./theme.js";
+import { Auth } from "./auth.js";
+
+export const Main = (() => {
+
   let tasks = [];
-  let filter = 'all'; // all | active | done
-  let search = '';
+  let filter = "all";
+  let search = "";
 
-  // Elementos
-  const els = {};
-  const q = (sel) => document.querySelector(sel);
+  /* ---------- LOADER ---------- */
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+      document.getElementById("appLoader")?.classList.add("hidden");
+    }, 250);
+  });
 
-  const toast = (msg) => {
-    const el = q('#toast');
-    if (!el) return;
-    el.textContent = msg;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 1800);
-  };
+  /* ---------- Toast local ---------- */
+  const toast = (msg) => UI.toast(msg);
 
-  const updateCounters = () => {
-    const total = tasks.length;
-    const done  = tasks.filter(t => t.done).length;
-    const active = total - done;
-    q('#totalCount').textContent  = total;
-    q('#doneCount').textContent   = done;
-    q('#activeCount').textContent = active;
-  };
-
-  const save = () => Storage.setTasks(tasks);
-
+  /* ---------- Renderização ---------- */
   const render = () => {
-    const list = q('#taskList');
-    const empty = q('#emptyState');
-    list.innerHTML = '';
+    const list = document.getElementById("taskList");
+    const empty = document.getElementById("emptyState");
 
-    // Aplica filtro e busca
-    const norm = (s) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'');
-    const match = (t) => {
+    list.innerHTML = "";
+
+    const norm = (s) =>
+      s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+
+    const filtered = tasks.filter(t => {
       const okFilter =
-        filter === 'all' ? true :
-        filter === 'active' ? !t.done :
-        t.done;
+        filter === "all"
+          ? true
+          : filter === "active"
+          ? !t.done
+          : t.done;
+
       const okSearch = !search || norm(t.text).includes(norm(search));
+
       return okFilter && okSearch;
-    };
+    });
 
-    const filtered = tasks.filter(match);
-    if (filtered.length === 0) {
-      empty.style.display = 'block';
-    } else {
-      empty.style.display = 'none';
-    }
+    empty.style.display = filtered.length === 0 ? "block" : "none";
 
-    filtered.forEach((t) => {
-      const li = document.createElement('li');
-      li.className = 'item' + (t.done ? ' done' : '');
+    filtered.forEach(t => {
+      const li = document.createElement("li");
+      li.className = "item" + (t.done ? " done" : "");
       li.dataset.id = t.id;
 
-      // Checkbox
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.className = 'check';
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "check";
       cb.checked = t.done;
-      cb.setAttribute('aria-label', 'Marcar tarefa como concluída');
 
-      // Texto
-      const span = document.createElement('span');
-      span.className = 'item-text';
+      const span = document.createElement("span");
+      span.className = "item-text";
       span.textContent = t.text;
 
-      // Ações
-      const actions = document.createElement('div');
-      actions.className = 'item-actions';
+      const actions = document.createElement("div");
+      actions.className = "item-actions";
 
-      // Editar (opcional)
-      const btnEdit = document.createElement('button');
-      btnEdit.className = 'icon';
-      btnEdit.title = 'Editar';
-      btnEdit.setAttribute('aria-label', 'Editar tarefa');
-      btnEdit.textContent = '✏️';
+      const editBtn = document.createElement("button");
+      editBtn.className = "icon";
+      editBtn.textContent = "✏️";
 
-      // Remover
-      const btnDel = document.createElement('button');
-      btnDel.className = 'icon danger';
-      btnDel.title = 'Excluir';
-      btnDel.setAttribute('aria-label', 'Excluir tarefa');
-      btnDel.textContent = '🗑️';
+      const delBtn = document.createElement("button");
+      delBtn.className = "icon danger";
+      delBtn.textContent = "🗑️";
 
-      actions.append(btnEdit, btnDel);
+      actions.append(editBtn, delBtn);
       li.append(cb, span, actions);
       list.append(li);
 
-      // Eventos
-      cb.addEventListener('change', () => toggleDone(t.id, cb.checked));
-      btnDel.addEventListener('click', () => removeTask(t.id));
-      btnEdit.addEventListener('click', () => editTask(t.id));
-      // Permitir marcar clicando no texto
-      span.addEventListener('click', () => { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); });
+      cb.addEventListener("change", () => toggleDone(t.id, cb.checked));
+      delBtn.addEventListener("click", () => removeTask(t.id));
+      editBtn.addEventListener("click", () => editTask(t.id));
+      span.addEventListener("click", () => {
+        cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event("change"));
+      });
     });
 
     updateCounters();
   };
 
+  /* ---------- CRUD ---------- */
+
   const addTask = (text) => {
-    const value = text.trim();
-    if (!value) return toast('⚠️ Digite uma tarefa.');
+    const val = text.trim();
+    if (!val) return toast("⚠ Digite algo.");
 
     const task = {
       id: crypto.randomUUID(),
-      text: value,
+      text: val,
       done: false,
       createdAt: Date.now()
     };
+
     tasks.unshift(task);
     save();
     render();
-    toast('✅ Tarefa adicionada!');
+    toast("✨ Tarefa adicionada!");
   };
 
   const editTask = (id) => {
     const t = tasks.find(x => x.id === id);
     if (!t) return;
-    const novo = prompt('Editar tarefa:', t.text);
-    if (novo === null) return; // cancelado
+
+    const novo = prompt("Editar tarefa:", t.text);
+    if (novo === null) return;
+
     const val = novo.trim();
-    if (!val) return toast('⚠️ O texto não pode ficar vazio.');
+    if (!val) return toast("⚠ O texto não pode ficar vazio.");
+
     t.text = val;
-    save(); render(); toast('✏️ Tarefa atualizada.');
+    save();
+    render();
+    toast("✏️ Atualizada!");
   };
 
   const toggleDone = (id, done) => {
     const t = tasks.find(x => x.id === id);
     if (!t) return;
-    t.done = !!done;
-    save(); render();
+    t.done = done;
+    save();
+    render();
   };
 
   const removeTask = (id) => {
-    const idx = tasks.findIndex(x => x.id === id);
-    if (idx < 0) return;
-    // Anima fadeOut
-    const li = q(`li.item[data-id="${id}"]`);
+    const i = tasks.findIndex(x => x.id === id);
+    if (i < 0) return;
+
+    const li = document.querySelector(`li[data-id="${id}"]`);
     if (li) {
-      li.style.animation = 'fadeOut .18s forwards';
+      li.style.animation = "fadeOut .18s forwards";
       setTimeout(() => {
-        tasks.splice(idx, 1);
-        save(); render();
-        toast('🗑️ Tarefa removida.');
+        tasks.splice(i, 1);
+        save();
+        render();
+        toast("🗑️ Removida.");
       }, 180);
-    } else {
-      tasks.splice(idx, 1);
-      save(); render();
-      toast('🗑️ Tarefa removida.');
     }
   };
 
-  const bindUI = () => {
-    els.input = q('#taskInput');
-    els.addBtn = q('#addTaskBtn');
-    els.list = q('#taskList');
-    els.search = q('#searchInput');
-
-    // Adicionar
-    els.addBtn.addEventListener('click', () => addTask(els.input.value));
-    els.input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') addTask(els.input.value);
-    });
-
-    // Filtros
-    document.querySelectorAll('.chip').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        filter = btn.dataset.filter;
-        render();
-      });
-    });
-
-    // Busca
-    els.search.addEventListener('input', (e) => {
-      search = e.target.value;
-      render();
-    });
-
-    // Ano no rodapé
-    const year = document.getElementById('year');
-    year.textContent = new Date().getFullYear();
+  /* ---------- Contadores ---------- */
+  const updateCounters = () => {
+    document.getElementById("totalCount").textContent = tasks.length;
+    document.getElementById("doneCount").textContent = tasks.filter(t => t.done).length;
+    document.getElementById("activeCount").textContent = tasks.filter(t => !t.done).length;
   };
 
+  /* ---------- Persistência ---------- */
   const load = () => {
     tasks = Storage.getTasks();
   };
 
-  // Quando trocar de usuário, recarrega dados/estado
-  const reloadForUser = () => {
-    load(); render();
-    const u = Auth.getUser();
-    document.title = u ? `TodoHub — ${u.name}` : 'TodoHub';
+  const save = () => {
+    Storage.setTasks(tasks);
   };
 
+  /* ---------- UI ---------- */
+  const bindUI = () => {
+    const input = document.getElementById("taskInput");
+    const btn = document.getElementById("addTaskBtn");
+    const searchInput = document.getElementById("searchInput");
+
+    btn.addEventListener("click", () => {
+      addTask(input.value);
+      input.value = "";
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        addTask(input.value);
+        input.value = "";
+      }
+    });
+
+    searchInput.addEventListener("input", (e) => {
+      search = e.target.value;
+      render();
+    });
+
+    document.querySelectorAll(".chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        filter = chip.dataset.filter;
+        render();
+      });
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  };
+
+  /* ---------- Recarga por usuário ---------- */
+  const reloadForUser = () => {
+    load();
+    render();
+
+    const u = Auth.getUser();
+    document.title = u ? `TodoHub — ${u.name}` : "TodoHub";
+  };
+
+  /* ---------- Init ---------- */
   const init = () => {
     bindUI();
     reloadForUser();
   };
 
-  return { init, reloadForUser, toast };
+  return {
+    init,
+    reloadForUser
+  };
+
 })();
 
-document.addEventListener('DOMContentLoaded', Main.init);
+/* Inicializa Main */
+document.addEventListener("DOMContentLoaded", Main.init);
+
+/* ---------- Atalhos ---------- */
+document.addEventListener("keydown", (e) => {
+
+  /* Ctrl+Shift+F — foco na busca */
+  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "f") {
+    e.preventDefault();
+    document.querySelector("[data-search]")?.focus();
+  }
+
+  /* D — alternar tema */
+  if (!e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "d") {
+    if (document.activeElement.tagName !== "INPUT") {
+      Theme.toggle();
+    }
+  }
+
+});
