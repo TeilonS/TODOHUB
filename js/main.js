@@ -5,6 +5,15 @@ import { UI } from "./ui.js";
 import { Theme } from "./theme.js";
 import { Auth } from "./auth.js";
 
+// Esconde o loader assim que o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', () => {
+  const loader = document.getElementById('appLoader');
+  if (loader) {
+    // pequeno delay só pra animação ficar suave
+    setTimeout(() => loader.classList.add('hidden'), 200);
+  }
+});
+
 export const Main = (() => {
 
   let tasks = [];
