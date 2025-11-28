@@ -20,6 +20,9 @@
 
   <!-- CSS principal -->
   <link rel="stylesheet" href="./css/style.css" />
+
+  <!-- XLSX para exportar Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -96,36 +99,52 @@
     </form>
   </dialog>
 
-  <!-- Edit Task Modal -->
-<dialog id="editDialog" class="edit-dialog">
-  <form id="editForm" method="dialog" class="card edit-card">
-    <h2>Editar tarefa</h2>
+  <!-- Edit Task Modal (tags + datas) -->
+  <dialog id="editDialog" class="edit-dialog">
+    <form id="editForm" method="dialog" class="card edit-card">
+      <h2>Editar tarefa</h2>
 
-    <label class="field">
-      <span>Texto</span>
-      <input type="text" id="editText" required />
-    </label>
+      <label class="field">
+        <span>Texto</span>
+        <input type="text" id="editText" required />
+      </label>
 
-    <div class="field">
-      <span>Prioridade</span>
-      <div id="editPriorityPicker" class="priority-picker">
-        <button type="button" data-priority="high" class="prio-btn">🔴</button>
-        <button type="button" data-priority="medium" class="prio-btn">🟡</button>
-        <button type="button" data-priority="low" class="prio-btn">🟢</button>
+      <div class="field">
+        <span>Prioridade</span>
+        <div id="editPriorityPicker" class="priority-picker">
+          <button type="button" data-priority="high" class="prio-btn">🔴</button>
+          <button type="button" data-priority="medium" class="prio-btn">🟡</button>
+          <button type="button" data-priority="low" class="prio-btn">🟢</button>
+        </div>
       </div>
-    </div>
 
-    <menu class="actions">
-      <button value="cancel">Cancelar</button>
-      <button id="editSaveBtn" type="submit" class="primary">Salvar</button>
-    </menu>
-  </form>
-</dialog>
+      <label class="field">
+        <span>Tags</span>
+        <input type="text" id="editTags" placeholder="ex: estudo, urgente, trabalho" />
+      </label>
+
+      <div class="field field-inline">
+        <div>
+          <span>Data limite</span>
+          <input type="date" id="editDueDate" />
+        </div>
+        <div>
+          <span>Horário</span>
+          <input type="time" id="editDueTime" />
+        </div>
+      </div>
+
+      <menu class="actions">
+        <button value="cancel">Cancelar</button>
+        <button id="editSaveBtn" type="submit" class="primary">Salvar</button>
+      </menu>
+    </form>
+  </dialog>
 
   <!-- MAIN -->
   <main class="container">
 
-    <!-- Indicadores -->
+    <!-- Indicadores principais -->
     <section class="stats">
 
       <article class="stat-card">
@@ -154,15 +173,38 @@
 
     </section>
 
+    <!-- Dashboard extra -->
+    <section class="analytics card">
+      <div class="analytics-row">
+        <div class="analytics-item">
+          <span class="analytics-label">Concluídas</span>
+          <div class="analytics-bar">
+            <div id="donePercentBar" class="analytics-bar-fill"></div>
+          </div>
+          <span id="donePercentLabel" class="analytics-value">0%</span>
+        </div>
+
+        <div class="analytics-item">
+          <span class="analytics-label">Atrasadas</span>
+          <span id="overdueCount" class="analytics-value">0</span>
+        </div>
+
+        <div class="analytics-item">
+          <span class="analytics-label">Criadas hoje</span>
+          <span id="todayCount" class="analytics-value">0</span>
+        </div>
+      </div>
+    </section>
+
     <!-- Adicionar tarefa -->
     <section class="add-task">
       <input id="taskInput" class="input" type="text" placeholder="O que precisa ser feito?" />
 
       <!-- PRIORITY PICKER -->
       <div id="priorityPicker" class="priority-picker">
-        <button data-priority="high" class="prio-btn">🔴</button>
-        <button data-priority="medium" class="prio-btn active">🟡</button>
-        <button data-priority="low" class="prio-btn">🟢</button>
+        <button type="button" data-priority="high" class="prio-btn">🔴</button>
+        <button type="button" data-priority="medium" class="prio-btn active">🟡</button>
+        <button type="button" data-priority="low" class="prio-btn">🟢</button>
       </div>
 
       <button id="addTaskBtn" class="btn primary">
@@ -171,25 +213,43 @@
     </section>
 
     <!-- Filtros + Busca -->
-    <div class="filters">
+    <div class="toolbar">
+      <div class="filters">
 
-  <!-- Estado -->
-  <button class="chip active" data-filter="all">Todos</button>
-  <button class="chip" data-filter="active">Ativas</button>
-  <button class="chip" data-filter="done">Concluídas</button>
+        <!-- Estado -->
+        <button class="chip active" data-filter-state="all">Todos</button>
+        <button class="chip" data-filter-state="active">Ativas</button>
+        <button class="chip" data-filter-state="done">Concluídas</button>
 
-  <!-- Prioridades -->
-  <button class="chip prio-chip" data-priority="high">🔴 Alta</button>
-  <button class="chip prio-chip" data-priority="medium">🟡 Média</button>
-  <button class="chip prio-chip" data-priority="low">🟢 Baixa</button>
+        <!-- Prioridades -->
+        <button class="chip prio-chip" data-filter-priority="high">🔴 Alta</button>
+        <button class="chip prio-chip" data-filter-priority="medium">🟡 Média</button>
+        <button class="chip prio-chip" data-filter-priority="low">🟢 Baixa</button>
 
-</div>
+      </div>
 
       <div class="search">
         <span>🔎</span>
         <input id="searchInput" class="input" type="search" placeholder="Buscar..." data-search />
       </div>
-    </section>
+    </div>
+
+    <!-- Ações extras -->
+    <div class="toolbar toolbar-bottom">
+      <div class="toolbar-left">
+        <button id="clearDoneBtn" class="btn subtle">🧹 Limpar concluídas</button>
+      </div>
+      <div class="toolbar-right">
+        <button id="exportJsonBtn" class="btn subtle">Exportar JSON</button>
+        <button id="exportCsvBtn" class="btn subtle">Exportar CSV</button>
+        <button id="exportExcelBtn" class="btn subtle">Exportar Excel</button>
+
+        <label class="btn subtle file-label">
+          Importar JSON
+          <input id="importJsonInput" type="file" accept="application/json" hidden />
+        </label>
+      </div>
+    </div>
 
     <!-- Lista -->
     <section class="task-list card">
@@ -219,3 +279,5 @@
 
 </body>
 </html>
+
+

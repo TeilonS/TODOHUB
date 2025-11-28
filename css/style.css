@@ -1,5 +1,5 @@
 /* ============================================================
-   TodoHub — Estilos principais (Dark + Light)
+   TodoHub — Estilos principais (Dark + Light + OLED)
    Layout minimalista + UI moderna
    ============================================================ */
 
@@ -22,15 +22,15 @@
 
   --radius: 14px;
 
-  /* PRIORIDADES */
+  /* Prioridades */
   --prio-high: #ff6b6b;
-  --prio-high-soft: rgba(255,107,107,0.22);
+  --prio-high-soft: rgba(255, 107, 107, 0.22);
 
   --prio-medium: #fbbf24;
-  --prio-medium-soft: rgba(251,191,36,0.25);
+  --prio-medium-soft: rgba(251, 191, 36, 0.25);
 
   --prio-low: #4ade80;
-  --prio-low-soft: rgba(74,222,128,0.25);
+  --prio-low-soft: rgba(74, 222, 128, 0.25);
 }
 
 /* Tema Claro */
@@ -47,6 +47,22 @@ html[data-theme="light"] {
 
   --outline: #d9e2ec;
   --shadow: rgba(0,0,0,0.08);
+}
+
+/* Tema OLED Deep Black */
+html[data-theme="oled"] {
+  --bg: #000000;
+  --bg-soft: #050505;
+  --card: #060606;
+  --text: #f9fafb;
+  --muted: #6b7280;
+  --input-text: #f9fafb;
+
+  --primary: #00bcd4;
+  --primary-strong: #00a0b5;
+
+  --outline: #111827;
+  --shadow: rgba(0,0,0,0.7);
 }
 
 /* -----------------------------------
@@ -72,16 +88,19 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   padding: 12px 20px;
+
   background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(15,23,42,0.6));
   border-bottom: 1px solid var(--outline);
+
   position: sticky;
   top: 0;
   z-index: 50;
+
   backdrop-filter: blur(10px);
 }
 
-/* Logo minimalista */
 .brand-logo {
   height: 52px;
   width: auto;
@@ -107,7 +126,9 @@ body {
 }
 .icon-btn:hover { transform: translateY(-1px); }
 
-/* Avatar */
+/* -----------------------------------
+   Avatar
+-----------------------------------*/
 .avatar {
   width: 28px;
   height: 28px;
@@ -123,7 +144,9 @@ body {
   height: 42px;
 }
 
-/* User menu */
+/* -----------------------------------
+   Menu do usuário
+-----------------------------------*/
 .user-menu { position: relative; }
 .user-chip {
   display: flex;
@@ -140,15 +163,21 @@ body {
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
+
   width: 250px;
+
   background: var(--card);
   border: 1px solid var(--outline);
   border-radius: 14px;
+
   padding: 8px;
+
   box-shadow: 0 10px 30px var(--shadow);
+
   opacity: 0;
   transform: translateY(-6px);
   pointer-events: none;
+
   transition: .15s ease;
 }
 .user-dropdown.open {
@@ -200,17 +229,66 @@ body {
   background: var(--card);
   border: 1px solid var(--outline);
   border-radius: var(--radius);
+
   padding: 14px;
+
   display: flex;
   align-items: center;
   gap: 14px;
+
   box-shadow: 0 6px 14px var(--shadow);
+
   transition: .15s ease;
 }
 .stat-card:hover { transform: translateY(-2px); }
 
 .stat-title { color: var(--muted); font-size: 14px; }
 .stat-number { font-weight: 700; font-size: 20px; }
+
+/* -----------------------------------
+   Dashboard / Analytics
+-----------------------------------*/
+.analytics {
+  margin-top: 18px;
+  padding: 14px 16px;
+}
+
+.analytics-row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.7fr 0.7fr;
+  gap: 16px;
+}
+
+.analytics-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.analytics-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.analytics-value {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.analytics-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+.analytics-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), var(--primary-strong));
+  transition: width .2s ease-out;
+}
 
 /* -----------------------------------
    Add Task
@@ -243,6 +321,10 @@ body {
   color: var(--text);
   cursor: pointer;
   transition: .15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.92rem;
 }
 .btn:hover { transform: translateY(-1px); }
 .btn.primary {
@@ -251,9 +333,14 @@ body {
   color: #001014;
   font-weight: 700;
 }
+.btn.subtle {
+  background: var(--card);
+  border-color: var(--outline);
+  font-weight: 500;
+}
 
 /* -----------------------------------
-   Toolbar (Filtros + Busca)
+   Toolbar
 -----------------------------------*/
 .toolbar {
   margin-top: 6px;
@@ -261,9 +348,27 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
-.filters { display: flex; gap: 8px; }
+.toolbar-bottom {
+  margin-top: 10px;
+}
+
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* filtros */
+.filters { 
+  display: flex; 
+  gap: 8px; 
+  flex-wrap: wrap;
+}
 
 .chip {
   padding: 8px 12px;
@@ -272,14 +377,15 @@ body {
   background: var(--card);
   cursor: pointer;
   transition: .15s ease;
+  font-size: 0.85rem;
 }
 
-/* Texto dos filtros com bom contraste no dark */
-html:not([data-theme="light"]) .chip { color: #e9eef5; }
-html:not([data-theme="light"]) .chip.active { color: #ffffff; }
-
-/* Hover melhor no dark */
-html:not([data-theme="light"]) .chip:hover { color: #ffffff; }
+html:not([data-theme="light"]) .chip {
+  color: #e9eef5;
+}
+html:not([data-theme="light"]) .chip:hover {
+  color: #ffffff;
+}
 
 .chip.active,
 .chip:hover {
@@ -297,31 +403,13 @@ html:not([data-theme="light"]) .chip:hover { color: #ffffff; }
   background: var(--card);
 }
 
-/* Chips de prioridade */
-.prio-chip {
-  font-weight: 600;
-}
-
-html[data-theme="dark"] .prio-chip {
-  color: var(--text);
-}
-
-.chip.prio-chip[data-priority="high"] {
-  border-color: var(--prio-high);
-}
-.chip.prio-chip[data-priority="medium"] {
-  border-color: var(--prio-medium);
-}
-.chip.prio-chip[data-priority="low"] {
-  border-color: var(--prio-low);
-}
-
-.chip.prio-chip:hover {
-  box-shadow: 0 0 0 3px rgba(0,188,212,.15);
+/* upload botão */
+.file-label {
+  cursor: pointer;
 }
 
 /* -----------------------------------
-   Lista de Tarefas
+   Lista
 -----------------------------------*/
 .card {
   background: var(--card);
@@ -333,52 +421,42 @@ html[data-theme="dark"] .prio-chip {
 }
 
 .list {
+  list-style: none;
   margin: 0;
   padding: 0;
-  list-style: none;
 }
 
-/* GRID CORRIGIDO: badge + checkbox + texto + ações */
 .item {
   display: grid;
-  grid-template-columns: 16px 28px 1fr auto;
+  grid-template-columns: 16px 1fr auto;
   gap: 12px;
-  align-items: center;
+  align-items: flex-start;
+
   padding: 12px 14px;
   border-bottom: 1px solid var(--outline);
+
   animation: fadeIn .2s ease;
 }
 .item:last-child { border-bottom: none; }
 
-/* Checkbox */
-.check {
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  border: 1px solid var(--outline);
-  background: var(--bg-soft);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  transition: .15s ease;
-}
-.check:checked {
-  background: #22c55e;
-  border-color: #22c55e;
-}
-.check:checked::after {
-  content: "✔";
-  color: #0b1117;
-  font-size: 14px;
+.item-text { 
+  word-break: break-word;
+  font-size: 0.95rem;
 }
 
-.item-text { word-break: break-word; }
+.item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Estados */
 .item.done .item-text {
   opacity: .6;
   text-decoration: line-through;
 }
 
+/* Ações */
 .item-actions {
   display: flex;
   gap: 6px;
@@ -400,50 +478,59 @@ html[data-theme="dark"] .prio-chip {
 }
 .icon.danger:hover { background: #ff6b6b22; }
 
-/* Estado vazio */
-.empty {
-  text-align: center;
-  padding: 36px 12px;
-  display: none;
+/* drag & drop */
+.item.drag-over {
+  outline: 2px dashed var(--primary);
+  outline-offset: -4px;
+  background: var(--bg-soft);
 }
-.empty-icon { font-size: 36px; }
-.muted { color: var(--muted); }
 
 /* -----------------------------------
-   PRIORIDADE (compatível com main.js)
+   PRIORIDADES
 -----------------------------------*/
+
 .priority-badge {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  display: block;
 }
 
 /* Alta */
-.priority-badge.priority-high {
+.priority-badge.high {
   background: var(--prio-high);
+}
+.item.priority-high {
+  border-left: 4px solid var(--prio-high);
   box-shadow: 0 0 0 4px var(--prio-high-soft);
 }
 
 /* Média */
-.priority-badge.priority-medium {
+.priority-badge.medium {
   background: var(--prio-medium);
+}
+.item.priority-medium {
+  border-left: 4px solid var(--prio-medium);
   box-shadow: 0 0 0 4px var(--prio-medium-soft);
 }
 
 /* Baixa */
-.priority-badge.priority-low {
+.priority-badge.low {
   background: var(--prio-low);
+}
+.item.priority-low {
+  border-left: 4px solid var(--prio-low);
   box-shadow: 0 0 0 4px var(--prio-low-soft);
 }
 
-/* Tarefas concluídas ficam suaves */
-.item.done .priority-badge {
-  opacity: .5;
+/* Concluídas — mais suave */
+.item.done.priority-high,
+.item.done.priority-medium,
+.item.done.priority-low {
+  opacity: 0.7;
 }
 
 /* -----------------------------------
-   Priority Picker
+   Priority Picker (círculos)
 -----------------------------------*/
 .priority-picker {
   display: flex;
@@ -475,6 +562,57 @@ html[data-theme="dark"] .prio-chip {
 }
 
 /* -----------------------------------
+   Metadados da tarefa
+-----------------------------------*/
+.item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.item-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* tags */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  border: 1px solid var(--outline);
+  background: var(--bg-soft);
+  cursor: pointer;
+}
+.tag-chip:hover {
+  border-color: var(--primary);
+}
+.tag-chip.active-tag {
+  border-color: var(--primary);
+  background: rgba(0,188,212,0.12);
+}
+
+/* -----------------------------------
+   Estado vazio
+-----------------------------------*/
+.empty {
+  text-align: center;
+  padding: 36px 12px;
+  display: none;
+}
+.empty-icon { font-size: 36px; }
+.muted { color: var(--muted); }
+
+/* -----------------------------------
    Toasts
 -----------------------------------*/
 #toastStack {
@@ -494,6 +632,7 @@ html[data-theme="dark"] .prio-chip {
   background: var(--card);
   border: 1px solid var(--outline);
   box-shadow: 0 6px 18px var(--shadow);
+
   opacity: 0;
   transform: translateY(8px);
   animation: toastIn .25s forwards ease-out;
@@ -511,13 +650,15 @@ html[data-theme="dark"] .prio-chip {
 }
 
 /* -----------------------------------
-   Modal de Login
+   Modal de Login / Edição
 -----------------------------------*/
-.login-dialog::backdrop {
+.login-dialog::backdrop,
+.edit-dialog::backdrop {
   background: rgba(0,0,0,0.55);
 }
 
-.login-dialog .card {
+.login-dialog .card,
+.edit-dialog .card {
   width: min(420px, 90vw);
   background: var(--card);
   border: 1px solid var(--outline);
@@ -529,32 +670,43 @@ html[data-theme="dark"] .prio-chip {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
 }
 
-.login-dialog h2 {
+.login-dialog h2,
+.edit-dialog h2 {
   text-align: center;
   margin: 0 0 10px;
   font-size: 1.3rem;
 }
 
+/* Campos */
 .field span {
   font-weight: 600;
   font-size: 0.9rem;
+  display: block;
+  margin-bottom: 4px;
 }
 
-.login-dialog input {
+.login-dialog input,
+.edit-dialog input {
+  width: 100%;
   background: var(--bg-soft);
   border: 1px solid var(--outline);
   border-radius: 10px;
   padding: 10px;
   color: var(--input-text);
 }
-.login-dialog input::placeholder {
-  color: var(--muted);
-}
-
-.login-dialog input:focus {
+.login-dialog input:focus,
+.edit-dialog input:focus {
   border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 0 2px rgba(0,188,212,.25);
+}
+
+.field-inline {
+  display: flex;
+  gap: 10px;
+}
+.field-inline > div {
+  flex: 1;
 }
 
 menu.actions {
@@ -654,56 +806,12 @@ menu.actions .primary {
     flex-direction: column;
     align-items: stretch;
   }
-}
 
-/* Tema ESCURO: garantir texto branco no modal de login */
-html[data-theme="dark"] .login-dialog,
-html[data-theme="dark"] .login-dialog .card {
-  background: var(--card);
-  color: #f9fafb;
-}
+  .add-task {
+    flex-direction: column;
+  }
 
-html[data-theme="dark"] .login-dialog .field span,
-html[data-theme="dark"] .login-dialog label,
-html[data-theme="dark"] .login-dialog input,
-html[data-theme="dark"] .login-dialog input::placeholder,
-html[data-theme="dark"] .login-dialog .muted {
-  color: #f9fafb;
-}
-
-/* Botão "Cancelar" no escuro */
-html[data-theme="dark"] .login-dialog menu.actions button[value="cancel"] {
-  background: transparent;
-  color: #f9fafb;
-  border-color: var(--outline);
-}
-
-/* ===========================
-   Edit Task Modal
-=========================== */
-
-.edit-dialog::backdrop {
-  background: rgba(0,0,0,0.55);
-}
-
-.edit-card {
-  width: min(420px, 90vw);
-  background: var(--card);
-  border: 1px solid var(--outline);
-  border-radius: 18px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.edit-card h2 {
-  text-align: center;
-  margin: 0 0 10px;
-  font-size: 1.3rem;
-}
-
-/* deixar o priority picker bonito */
-.edit-card .priority-picker {
-  margin-top: 8px;
+  .analytics-row {
+    grid-template-columns: 1fr;
+  }
 }

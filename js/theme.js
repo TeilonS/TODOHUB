@@ -1,29 +1,36 @@
-/* theme.js — Controle de Tema Dark/Light */
+/* theme.js — Controle de Tema Dark/Light/OLED */
 
 import { Storage } from "./storage.js";
 
 export const Theme = (() => {
 
   const KEY = "theme";
+  const THEMES = ["dark", "light", "oled"];
 
   const apply = (theme) => {
     document.documentElement.setAttribute("data-theme", theme);
 
     const icon = document.getElementById("themeIcon");
     if (icon) {
-      // Ícone indica para onde vai mudar
-      icon.textContent = theme === "dark" ? "☀️" : "🌙";
+      const idx = THEMES.indexOf(theme);
+      const next = THEMES[(idx + 1) % THEMES.length];
+      icon.textContent =
+        next === "light" ? "☀️" :
+        next === "dark"  ? "🌙" :
+                           "🖤";
     }
 
     Storage.setPref(KEY, theme);
   };
 
+  const get = () => Storage.getPref(KEY) || "dark";
+
   const toggle = () => {
-    const next = get() === "dark" ? "light" : "dark";
+    const current = get();
+    const idx = THEMES.indexOf(current);
+    const next = THEMES[(idx + 1) % THEMES.length];
     apply(next);
   };
-
-  const get = () => Storage.getPref(KEY) || "dark";
 
   const init = () => {
     apply(get());
@@ -34,5 +41,4 @@ export const Theme = (() => {
 
 })();
 
-/* Inicializa */
 document.addEventListener("DOMContentLoaded", Theme.init);
