@@ -815,3 +815,119 @@ menu.actions .primary {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================
+   CORREÇÕES DO MODAL DE LOGIN (DARK / LIGHT / OLED)
+   ============================================ */
+
+/* Container do modal */
+.login-dialog .card {
+  color: var(--text);
+}
+
+/* Títulos */
+.login-dialog h2 {
+  color: var(--text);
+}
+
+/* Labels */
+.login-dialog .field span {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Inputs */
+.login-dialog input {
+  background: var(--bg-soft);
+  border: 1px solid var(--outline);
+  color: var(--input-text);
+}
+
+html[data-theme="light"] .login-dialog input {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #cfd6e0;
+}
+
+html[data-theme="oled"] .login-dialog input {
+  background: #0a0a0a;
+  border-color: #222;
+  color: #fafafa;
+}
+
+/* Texto do rodapé */
+.login-dialog small {
+  color: var(--muted);
+}
+
+/* ============================================
+   CHECKBOX + LABEL (alinhamento e visibilidade)
+   ============================================ */
+
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px 0;
+}
+
+.form-check label {
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* Corrige checkbox no Firefox + Chrome */
+.form-check .native-check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+/* Light mode checkbox */
+html[data-theme="light"] .form-check .native-check {
+  accent-color: #0ea5e9;
+}
+
+/* OLED checkbox */
+html[data-theme="oled"] .form-check .native-check {
+  accent-color: #00d4ff;
+}
+
+/* ============================================
+   BOTÕES DO MODAL
+   ============================================ */
+
+menu.actions button[value="cancel"] {
+  color: var(--text);
+  border-color: var(--outline);
+  background: transparent;
+}
+
+html[data-theme="light"] menu.actions button[value="cancel"] {
+  color: #0f172a;
+  background: #fff;
+  border-color: #d6dce3;
+}
+
+html[data-theme="oled"] menu.actions button[value="cancel"] {
+  background: #0a0a0a;
+  border-color: #222;
+  color: #fafafa;
+}
+
+menu.actions .primary {
+  background: var(--primary);
+  color: #001014;
+}
+
+html[data-theme="oled"] menu.actions .primary {
+  background: #00c4dd;
+  color: #000;
+}
+
+/* Mantém foco acessível */
+.login-dialog input:focus,
+menu.actions button:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
