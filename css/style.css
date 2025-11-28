@@ -21,6 +21,16 @@
   --shadow: rgba(0,0,0,0.35);
 
   --radius: 14px;
+
+  /* PRIORIDADES */
+  --prio-high: #ff6b6b;
+  --prio-high-soft: rgba(255,107,107,0.22);
+
+  --prio-medium: #fbbf24;
+  --prio-medium-soft: rgba(251,191,36,0.25);
+
+  --prio-low: #4ade80;
+  --prio-low-soft: rgba(74,222,128,0.25);
 }
 
 /* Tema Claro */
@@ -62,16 +72,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   padding: 12px 20px;
-
   background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(15,23,42,0.6));
   border-bottom: 1px solid var(--outline);
-
   position: sticky;
   top: 0;
   z-index: 50;
-
   backdrop-filter: blur(10px);
 }
 
@@ -134,21 +140,15 @@ body {
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
-
   width: 250px;
-
   background: var(--card);
   border: 1px solid var(--outline);
   border-radius: 14px;
-
   padding: 8px;
-
   box-shadow: 0 10px 30px var(--shadow);
-
   opacity: 0;
   transform: translateY(-6px);
   pointer-events: none;
-
   transition: .15s ease;
 }
 .user-dropdown.open {
@@ -200,15 +200,11 @@ body {
   background: var(--card);
   border: 1px solid var(--outline);
   border-radius: var(--radius);
-
   padding: 14px;
-
   display: flex;
   align-items: center;
   gap: 14px;
-
   box-shadow: 0 6px 14px var(--shadow);
-
   transition: .15s ease;
 }
 .stat-card:hover { transform: translateY(-2px); }
@@ -278,19 +274,12 @@ body {
   transition: .15s ease;
 }
 
-/* Texto dos filtros com bom contraste no tema escuro */
-html:not([data-theme="light"]) .chip {
-  color: #e9eef5;        /* claro */
-}
+/* Texto dos filtros com bom contraste no dark */
+html:not([data-theme="light"]) .chip { color: #e9eef5; }
+html:not([data-theme="light"]) .chip.active { color: #ffffff; }
 
-html:not([data-theme="light"]) .chip.active {
-  color: #e9eef5;
-}
-
-/* Mais destaque no hover no dark */
-html:not([data-theme="light"]) .chip:hover {
-  color: #ffffff;
-}
+/* Hover melhor no dark */
+html:not([data-theme="light"]) .chip:hover { color: #ffffff; }
 
 .chip.active,
 .chip:hover {
@@ -308,6 +297,29 @@ html:not([data-theme="light"]) .chip:hover {
   background: var(--card);
 }
 
+/* Chips de prioridade */
+.prio-chip {
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .prio-chip {
+  color: var(--text);
+}
+
+.chip.prio-chip[data-priority="high"] {
+  border-color: var(--prio-high);
+}
+.chip.prio-chip[data-priority="medium"] {
+  border-color: var(--prio-medium);
+}
+.chip.prio-chip[data-priority="low"] {
+  border-color: var(--prio-low);
+}
+
+.chip.prio-chip:hover {
+  box-shadow: 0 0 0 3px rgba(0,188,212,.15);
+}
+
 /* -----------------------------------
    Lista de Tarefas
 -----------------------------------*/
@@ -321,24 +333,24 @@ html:not([data-theme="light"]) .chip:hover {
 }
 
 .list {
-  list-style: none;
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
+/* GRID CORRIGIDO: badge + checkbox + texto + ações */
 .item {
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 16px 28px 1fr auto;
   gap: 12px;
   align-items: center;
-
   padding: 12px 14px;
   border-bottom: 1px solid var(--outline);
-
   animation: fadeIn .2s ease;
 }
 .item:last-child { border-bottom: none; }
 
+/* Checkbox */
 .check {
   appearance: none;
   width: 20px;
@@ -352,8 +364,8 @@ html:not([data-theme="light"]) .chip:hover {
   transition: .15s ease;
 }
 .check:checked {
-  background: var(--success);
-  border-color: var(--success);
+  background: #22c55e;
+  border-color: #22c55e;
 }
 .check:checked::after {
   content: "✔";
@@ -398,6 +410,71 @@ html:not([data-theme="light"]) .chip:hover {
 .muted { color: var(--muted); }
 
 /* -----------------------------------
+   PRIORIDADE (compatível com main.js)
+-----------------------------------*/
+.priority-badge {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: block;
+}
+
+/* Alta */
+.priority-badge.priority-high {
+  background: var(--prio-high);
+  box-shadow: 0 0 0 4px var(--prio-high-soft);
+}
+
+/* Média */
+.priority-badge.priority-medium {
+  background: var(--prio-medium);
+  box-shadow: 0 0 0 4px var(--prio-medium-soft);
+}
+
+/* Baixa */
+.priority-badge.priority-low {
+  background: var(--prio-low);
+  box-shadow: 0 0 0 4px var(--prio-low-soft);
+}
+
+/* Tarefas concluídas ficam suaves */
+.item.done .priority-badge {
+  opacity: .5;
+}
+
+/* -----------------------------------
+   Priority Picker
+-----------------------------------*/
+.priority-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.prio-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--card);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  transition: .15s ease;
+}
+
+.prio-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 6px rgba(255,255,255,0.12);
+}
+
+.prio-btn.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(0,188,212,.25);
+}
+
+/* -----------------------------------
    Toasts
 -----------------------------------*/
 #toastStack {
@@ -417,7 +494,6 @@ html:not([data-theme="light"]) .chip:hover {
   background: var(--card);
   border: 1px solid var(--outline);
   box-shadow: 0 6px 18px var(--shadow);
-
   opacity: 0;
   transform: translateY(8px);
   animation: toastIn .25s forwards ease-out;
@@ -471,13 +547,17 @@ html:not([data-theme="light"]) .chip:hover {
   padding: 10px;
   color: var(--input-text);
 }
+.login-dialog input::placeholder {
+  color: var(--muted);
+}
+
 .login-dialog input:focus {
   border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 0 2px rgba(0,188,212,.25);
 }
 
-.menu.actions {
+menu.actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -490,6 +570,7 @@ menu.actions button[value="cancel"] {
   padding: 8px 12px;
   border-radius: 10px;
 }
+
 html[data-theme="light"] menu.actions button[value="cancel"] {
   background: #ffffff;
   color: #0f172a;
@@ -590,7 +671,7 @@ html[data-theme="dark"] .login-dialog .muted {
   color: #f9fafb;
 }
 
-/* Botão "Cancelar" no escuro: borda e texto claros */
+/* Botão "Cancelar" no escuro */
 html[data-theme="dark"] .login-dialog menu.actions button[value="cancel"] {
   background: transparent;
   color: #f9fafb;
