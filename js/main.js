@@ -1,4 +1,5 @@
-// main.js — CRUD, filtros, busca, prioridades, datas, tags, drag & drop, export, multiusuário
+// main.js — CRUD, filtros, busca, prioridades, datas, tags, subtarefas,
+// drag & drop, export, seleção múltipla, notificações locais, multiusuário
 
 import { Storage } from "./storage.js";
 import { UI } from "./ui.js";
@@ -16,15 +17,24 @@ document.addEventListener("DOMContentLoaded", () => {
 export const Main = (() => {
 
   let tasks = [];
+
   let filterState = "all";      // all | active | done
   let filterPriority = null;    // high | medium | low | null
   let activeTag = null;         // string ou null
   let search = "";
 
+  // seleção múltipla
+  let selectionMode = false;
+  let selectedIds = new Set();
+
+  // edição
   let draggedId = null;
   let editingTaskId = null;
 
-  const toast = (msg) => UI.toast(msg);
+  // notificações
+  const notificationTimers = {};
+
+  const toast = (msg, type = "success") => UI.toast(msg, type);
 
   /* ------------------ HELPERS ------------------ */
 
@@ -80,10 +90,19 @@ export const Main = (() => {
     if (typeof t.done !== "boolean") t.done = false;
     if (!t.priority) t.priority = "medium";
     if (!t.createdAt) t.createdAt = Date.now();
+    if (typeof t.completedAt !== "number") t.completedAt = null;
     if (!Array.isArray(t.tags)) t.tags = [];
     if (typeof t.dueDate !== "number") t.dueDate = null;
-    if (typeof t.completedAt !== "number") t.completedAt = null;
+    if (!Array.isArray(t.subtasks)) t.subtasks = [];
     if (typeof t.order !== "number") t.order = idx + 1;
+
+    // garante shape das subtarefas
+    t.subtasks = t.subtasks.map((st, i) => ({
+      id: st.id || crypto.randomUUID(),
+      text: typeof st.text === "string" ? st.text : "",
+      done: !!st.done,
+      order: typeof st.order === "number" ? st.order : i + 1,
+    }));
 
     return t;
   };
@@ -99,6 +118,60 @@ export const Main = (() => {
       const ob = typeof b.order === "number" ? b.order : 0;
       return oa - ob;
     });
+  };
+
+  /* ------------------ NOTIFICAÇÕES ------------------ */
+
+  const canNotify = () => "Notification" in window;
+
+  const clearNotificationTimer = (taskId) => {
+    const tId = notificationTimers[taskId];
+    if (tId) {
+      clearTimeout(tId);
+      delete notificationTimers[taskId];
+    }
+  };
+
+  const scheduleNotification = (task) => {
+    if (!canNotify()) return;
+    if (Notification.permission !== "granted") return;
+    if (!task.dueDate || task.done) return;
+
+    const delay = task.dueDate - Date.now();
+    if (delay <= 0) return;
+
+    clearNotificationTimer(task.id);
+
+    const safeDelay = Math.min(delay, 2147483647); // ~24 dias, limite do setTimeout
+
+    notificationTimers[task.id] = setTimeout(() => {
+      try {
+        new Notification("TodoHub — lembrete", {
+          body: `Tarefa: ${task.text}`,
+        });
+      } catch {
+        // se der erro, apenas mostra toast
+      }
+      toast(`🔔 Lembrete: ${task.text}`);
+      clearNotificationTimer(task.id);
+    }, safeDelay);
+  };
+
+  const rescheduleAllNotifications = () => {
+    Object.keys(notificationTimers).forEach(clearNotificationTimer);
+    tasks.forEach(scheduleNotification);
+  };
+
+  const setupNotificationPermissionTrigger = () => {
+    if (!canNotify()) return;
+    if (Notification.permission !== "default") return;
+
+    const handler = () => {
+      Notification.requestPermission().finally(() => {
+        document.removeEventListener("click", handler);
+      });
+    };
+    document.addEventListener("click", handler, { once: true });
   };
 
   /* ------------------ RENDER ------------------ */
@@ -143,9 +216,40 @@ export const Main = (() => {
       const li = document.createElement("li");
       li.className = `item priority-${t.priority}` + (t.done ? " done" : "");
       li.dataset.id = t.id;
-      li.draggable = true;
 
-      /* Badge colorido */
+      // drag apenas fora do modo seleção
+      if (!selectionMode) {
+        li.draggable = true;
+
+        li.addEventListener("dragstart", () => {
+          draggedId = t.id;
+        });
+
+        li.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          li.classList.add("drag-over");
+        });
+
+        li.addEventListener("dragleave", () => {
+          li.classList.remove("drag-over");
+        });
+
+        li.addEventListener("drop", (e) => {
+          e.preventDefault();
+          li.classList.remove("drag-over");
+          if (!draggedId || draggedId === t.id) return;
+          reorderTasks(draggedId, t.id);
+          draggedId = null;
+        });
+      }
+
+      /* Badge colorido / checkbox seleção/conclusão */
+      const badgeWrapper = document.createElement("div");
+      badgeWrapper.style.display = "flex";
+      badgeWrapper.style.flexDirection = "column";
+      badgeWrapper.style.alignItems = "center";
+      badgeWrapper.style.gap = "4px";
+
       const badge = document.createElement("span");
       badge.className = `priority-badge ${t.priority}`;
       badge.title = "Prioridade";
@@ -153,7 +257,16 @@ export const Main = (() => {
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.className = "check";
-      cb.checked = t.done;
+
+      if (selectionMode) {
+        cb.checked = selectedIds.has(t.id);
+        cb.title = "Selecionar tarefa";
+      } else {
+        cb.checked = t.done;
+        cb.title = "Concluir tarefa";
+      }
+
+      badgeWrapper.append(badge, cb);
 
       const main = document.createElement("div");
       main.className = "item-main";
@@ -215,6 +328,80 @@ export const Main = (() => {
 
       main.append(textSpan, meta);
 
+      // SUBTAREFAS inline
+      if (t.subtasks && t.subtasks.length > 0) {
+        const subList = document.createElement("ul");
+        subList.className = "subtask-list";
+
+        // ordena subtarefas pela ordem interna
+        const sortedSubs = [...t.subtasks].sort(
+          (a, b) => (a.order || 0) - (b.order || 0)
+        );
+
+        sortedSubs.forEach((st) => {
+          const stLi = document.createElement("li");
+          stLi.className = "subtask-item" + (st.done ? " done" : "");
+
+          const stCb = document.createElement("input");
+          stCb.type = "checkbox";
+          stCb.checked = st.done;
+
+          const stText = document.createElement("span");
+          stText.textContent = st.text;
+
+          const stDel = document.createElement("button");
+          stDel.type = "button";
+          stDel.textContent = "✕";
+          stDel.title = "Excluir subtarefa";
+
+          stCb.addEventListener("change", () =>
+            toggleSubtaskDone(t.id, st.id, stCb.checked)
+          );
+          stText.addEventListener("click", () => {
+            stCb.checked = !stCb.checked;
+            stCb.dispatchEvent(new Event("change"));
+          });
+          stDel.addEventListener("click", () =>
+            removeSubtask(t.id, st.id)
+          );
+
+          stLi.append(stCb, stText, stDel);
+          subList.appendChild(stLi);
+        });
+
+        // linha para adicionar subtarefa inline
+        const addRow = document.createElement("div");
+        addRow.className = "subtask-add";
+
+        const addInput = document.createElement("input");
+        addInput.type = "text";
+        addInput.placeholder = "Nova subtarefa";
+
+        const addBtn = document.createElement("button");
+        addBtn.type = "button";
+        addBtn.textContent = "+";
+
+        addBtn.addEventListener("click", () => {
+          if (!addInput.value.trim()) return;
+          addSubtask(t.id, addInput.value.trim());
+          addInput.value = "";
+        });
+
+        addInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (!addInput.value.trim()) return;
+            addSubtask(t.id, addInput.value.trim());
+            addInput.value = "";
+          }
+        });
+
+        addRow.append(addInput, addBtn);
+        subList.appendChild(addRow);
+
+        main.appendChild(subList);
+      }
+
       const actions = document.createElement("div");
       actions.className = "item-actions";
 
@@ -227,44 +414,42 @@ export const Main = (() => {
       delBtn.textContent = "🗑️";
 
       actions.append(editBtn, delBtn);
-      li.append(badge, cb, main, actions);
+      li.append(badgeWrapper, main, actions);
       list.append(li);
 
-      // eventos
-      cb.addEventListener("change", () => toggleDone(t.id, cb.checked));
+      // eventos checkbox principal
+      cb.addEventListener("change", () => {
+        if (selectionMode) {
+          if (cb.checked) selectedIds.add(t.id);
+          else selectedIds.delete(t.id);
+          updateBulkBar();
+        } else {
+          toggleDone(t.id, cb.checked);
+        }
+      });
+
+      // clique no texto
+      textSpan.addEventListener("click", () => {
+        if (selectionMode) {
+          const isSelected = selectedIds.has(t.id);
+          if (isSelected) selectedIds.delete(t.id);
+          else selectedIds.add(t.id);
+          render(); // re-render para refletir estado
+          updateBulkBar();
+        } else {
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event("change"));
+        }
+      });
+
+      // editar / remover
       delBtn.addEventListener("click", () => removeTask(t.id));
       editBtn.addEventListener("click", () => openEditModal(t.id));
-
-      textSpan.addEventListener("click", () => {
-        cb.checked = !cb.checked;
-        cb.dispatchEvent(new Event("change"));
-      });
-
-      // drag & drop
-      li.addEventListener("dragstart", () => {
-        draggedId = t.id;
-      });
-
-      li.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        li.classList.add("drag-over");
-      });
-
-      li.addEventListener("dragleave", () => {
-        li.classList.remove("drag-over");
-      });
-
-      li.addEventListener("drop", (e) => {
-        e.preventDefault();
-        li.classList.remove("drag-over");
-        if (!draggedId || draggedId === t.id) return;
-        reorderTasks(draggedId, t.id);
-        draggedId = null;
-      });
     });
 
     updateCounters();
     updateAnalytics();
+    updateBulkBar();
   };
 
   /* ------------------ REORDENAR (drag & drop) ------------------ */
@@ -286,7 +471,7 @@ export const Main = (() => {
   /* ------------------ ADD TASK ------------------ */
   const addTask = (text) => {
     const val = text.trim();
-    if (!val) return toast("⚠ Digite algo.");
+    if (!val) return toast("⚠ Digite algo.", "warn");
 
     const maxOrder = tasks.reduce(
       (acc, t) => (typeof t.order === "number" ? Math.max(acc, t.order) : acc),
@@ -302,6 +487,7 @@ export const Main = (() => {
       priority: currentPriority,
       tags: [],
       dueDate: null,
+      subtasks: [],
       order: maxOrder + 1,
     };
 
@@ -309,7 +495,87 @@ export const Main = (() => {
     sortTasks();
     save();
     render();
+    scheduleNotification(task);
     toast("✨ Tarefa adicionada!");
+  };
+
+  /* ------------------ SUBTAREFAS ------------------ */
+
+  const addSubtask = (taskId, text) => {
+    const t = tasks.find((x) => x.id === taskId);
+    if (!t) return;
+    if (!Array.isArray(t.subtasks)) t.subtasks = [];
+
+    const maxOrder = t.subtasks.reduce(
+      (acc, st) => (typeof st.order === "number" ? Math.max(acc, st.order) : acc),
+      0
+    );
+
+    const sub = {
+      id: crypto.randomUUID(),
+      text,
+      done: false,
+      order: maxOrder + 1,
+    };
+
+    t.subtasks.push(sub);
+    save();
+    render();
+    if (editingTaskId === taskId) refreshModalSubtasks();
+  };
+
+  const toggleSubtaskDone = (taskId, subId, done) => {
+    const t = tasks.find((x) => x.id === taskId);
+    if (!t || !Array.isArray(t.subtasks)) return;
+    const st = t.subtasks.find((s) => s.id === subId);
+    if (!st) return;
+    st.done = done;
+    save();
+    render();
+    if (editingTaskId === taskId) refreshModalSubtasks();
+  };
+
+  const removeSubtask = (taskId, subId) => {
+    const t = tasks.find((x) => x.id === taskId);
+    if (!t || !Array.isArray(t.subtasks)) return;
+    t.subtasks = t.subtasks.filter((s) => s.id !== subId);
+    save();
+    render();
+    if (editingTaskId === taskId) refreshModalSubtasks();
+  };
+
+  const refreshModalSubtasks = () => {
+    const listEl = document.getElementById("subtasksList");
+    const inputEl = document.getElementById("newSubtaskText");
+    if (!listEl || editingTaskId == null) return;
+    listEl.innerHTML = "";
+
+    const t = tasks.find((x) => x.id === editingTaskId);
+    if (!t) return;
+
+    const sortedSubs = [...(t.subtasks || [])].sort(
+      (a, b) => (a.order || 0) - (b.order || 0)
+    );
+
+    sortedSubs.forEach((st) => {
+      const li = document.createElement("li");
+      li.className = "subtask-item" + (st.done ? " done" : "");
+
+      const label = document.createElement("span");
+      label.textContent = st.text;
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "✕";
+      btn.title = "Excluir subtarefa";
+
+      btn.addEventListener("click", () => removeSubtask(t.id, st.id));
+
+      li.append(label, btn);
+      listEl.appendChild(li);
+    });
+
+    if (inputEl) inputEl.value = "";
   };
 
   /* ------------------ EDIT TASK ------------------ */
@@ -354,6 +620,7 @@ export const Main = (() => {
     );
     if (current) current.classList.add("active");
 
+    refreshModalSubtasks();
     document.getElementById("editDialog")?.showModal();
   };
 
@@ -364,6 +631,12 @@ export const Main = (() => {
 
     t.done = done;
     t.completedAt = done ? Date.now() : null;
+
+    if (done) {
+      clearNotificationTimer(id);
+    } else {
+      scheduleNotification(t);
+    }
 
     sortTasks();
     save();
@@ -376,6 +649,8 @@ export const Main = (() => {
     if (idx < 0) return;
 
     const li = document.querySelector(`li[data-id="${id}"]`);
+    clearNotificationTimer(id);
+
     if (li) {
       li.style.animation = "fadeOut .18s forwards";
       setTimeout(() => {
@@ -396,11 +671,15 @@ export const Main = (() => {
 
   /* ------------------ LIMPAR CONCLUÍDAS ------------------ */
   const clearDone = () => {
-    const doneCount = tasks.filter((t) => t.done).length;
+    const doneTasks = tasks.filter((t) => t.done);
+    const doneCount = doneTasks.length;
     if (!doneCount) {
-      toast("Nenhuma tarefa concluída para limpar.");
+      toast("Nenhuma tarefa concluída para limpar.", "warn");
       return;
     }
+
+    doneTasks.forEach((t) => clearNotificationTimer(t.id));
+
     tasks = tasks.filter((t) => !t.done);
     // reajusta ordem
     tasks = tasks.map((t, idx) => ({ ...t, order: idx + 1 }));
@@ -523,7 +802,7 @@ export const Main = (() => {
 
   const exportExcel = () => {
     if (typeof XLSX === "undefined") {
-      toast("⚠ Biblioteca XLSX não encontrada.");
+      toast("⚠ Biblioteca XLSX não encontrada.", "warn");
       return;
     }
 
@@ -576,7 +855,7 @@ export const Main = (() => {
       try {
         const parsed = JSON.parse(e.target.result);
         if (!parsed || !Array.isArray(parsed.tasks)) {
-          toast("⚠ Arquivo inválido.");
+          toast("⚠ Arquivo inválido.", "warn");
           return;
         }
         const imported = parsed.tasks.map((t, idx) =>
@@ -586,13 +865,88 @@ export const Main = (() => {
         sortTasks();
         save();
         render();
+        rescheduleAllNotifications();
         toast("✅ Backup importado com sucesso.");
       } catch (err) {
         console.error(err);
-        toast("⚠ Erro ao importar JSON.");
+        toast("⚠ Erro ao importar JSON.", "error");
       }
     };
     reader.readAsText(file);
+  };
+
+  /* ------------------ SELEÇÃO MÚLTIPLA ------------------ */
+
+  const enterSelectionMode = () => {
+    selectionMode = true;
+    selectedIds = new Set();
+    document.body.classList.add("selection-mode");
+    toast("✅ Modo seleção ativado. Use os checkboxes ou Shift+S para sair.");
+    render();
+  };
+
+  const exitSelectionMode = () => {
+    selectionMode = false;
+    selectedIds.clear();
+    document.body.classList.remove("selection-mode");
+    render();
+  };
+
+  const updateBulkBar = () => {
+    const bar = document.getElementById("bulkBar");
+    const countEl = document.getElementById("bulkCount");
+    const count = selectedIds.size;
+
+    if (!bar || !countEl) return;
+
+    if (!selectionMode || count === 0) {
+      bar.classList.add("hidden");
+    } else {
+      bar.classList.remove("hidden");
+      countEl.textContent =
+        count === 1
+          ? "1 tarefa selecionada"
+          : `${count} tarefas selecionadas`;
+    }
+  };
+
+  const bulkSetPriority = (priority) => {
+    if (!selectedIds.size) return;
+    tasks.forEach((t) => {
+      if (selectedIds.has(t.id)) t.priority = priority;
+    });
+    sortTasks();
+    save();
+    render();
+    toast("✨ Prioridade atualizada em lote.");
+  };
+
+  const bulkMarkDone = () => {
+    if (!selectedIds.size) return;
+    tasks.forEach((t) => {
+      if (selectedIds.has(t.id)) {
+        t.done = true;
+        t.completedAt = Date.now();
+        clearNotificationTimer(t.id);
+      }
+    });
+    sortTasks();
+    save();
+    render();
+    toast("✅ Tarefas marcadas como concluídas.");
+  };
+
+  const bulkDelete = () => {
+    if (!selectedIds.size) return;
+    const toDelete = tasks.filter((t) => selectedIds.has(t.id));
+    toDelete.forEach((t) => clearNotificationTimer(t.id));
+
+    tasks = tasks.filter((t) => !selectedIds.has(t.id));
+    tasks = tasks.map((t, idx) => ({ ...t, order: idx + 1 }));
+    sortTasks();
+    save();
+    render();
+    toast("🗑️ Tarefas selecionadas removidas.");
   };
 
   /* ------------------ UI BIND ------------------ */
@@ -605,8 +959,15 @@ export const Main = (() => {
     const exportCsvBtn = document.getElementById("exportCsvBtn");
     const exportExcelBtn = document.getElementById("exportExcelBtn");
     const importJsonInput = document.getElementById("importJsonInput");
+    const selectionModeBtn = document.getElementById("selectionModeBtn");
+    const bulkExitBtn = document.getElementById("bulkExitBtn");
+    const bulkDoneBtn = document.getElementById("bulkDoneBtn");
+    const bulkDeleteBtn = document.getElementById("bulkDeleteBtn");
+    const bulkPrioButtons = document.querySelectorAll(".bulk-prio");
+    const addSubtaskBtn = document.getElementById("addSubtaskBtn");
+    const newSubtaskInput = document.getElementById("newSubtaskText");
 
-    /* Priority picker */
+    /* Priority picker (nova tarefa) */
     const prioButtons = document.querySelectorAll("#priorityPicker .prio-btn");
     prioButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -645,7 +1006,6 @@ export const Main = (() => {
         const state = chip.dataset.filterState || null;
         const prio = chip.dataset.filterPriority || null;
 
-        // limpa seleção anterior
         if (state) {
           document
             .querySelectorAll("[data-filter-state]")
@@ -655,7 +1015,6 @@ export const Main = (() => {
         }
 
         if (prio) {
-          // prioridade pode ser desligada clicando de novo
           const isActive = chip.classList.contains("active");
           document
             .querySelectorAll("[data-filter-priority]")
@@ -709,7 +1068,7 @@ export const Main = (() => {
 
         const newText = textInput?.value.trim() || "";
         if (!newText) {
-          toast("⚠ Texto não pode ser vazio.");
+          toast("⚠ Texto não pode ser vazio.", "warn");
           return;
         }
 
@@ -749,6 +1108,13 @@ export const Main = (() => {
         t.tags = newTags;
         t.dueDate = newDueDate;
 
+        if (t.done && t.dueDate) {
+          // se estiver concluída, não notificar
+          clearNotificationTimer(t.id);
+        } else {
+          scheduleNotification(t);
+        }
+
         sortTasks();
         save();
         render();
@@ -769,6 +1135,66 @@ export const Main = (() => {
         btn.classList.add("active");
       });
     });
+
+    // botão de adicionar subtarefa no modal
+    if (addSubtaskBtn && newSubtaskInput) {
+      addSubtaskBtn.addEventListener("click", () => {
+        if (!editingTaskId) return;
+        if (!newSubtaskInput.value.trim()) return;
+        addSubtask(editingTaskId, newSubtaskInput.value.trim());
+        newSubtaskInput.value = "";
+        refreshModalSubtasks();
+      });
+
+      newSubtaskInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (!editingTaskId) return;
+          if (!newSubtaskInput.value.trim()) return;
+          addSubtask(editingTaskId, newSubtaskInput.value.trim());
+          newSubtaskInput.value = "";
+          refreshModalSubtasks();
+        }
+      });
+    }
+
+    // seleção múltipla
+    if (selectionModeBtn) {
+      selectionModeBtn.addEventListener("click", () => {
+        if (selectionMode) exitSelectionMode();
+        else enterSelectionMode();
+      });
+    }
+
+    if (bulkExitBtn) {
+      bulkExitBtn.addEventListener("click", () => {
+        exitSelectionMode();
+      });
+    }
+
+    if (bulkDoneBtn) {
+      bulkDoneBtn.addEventListener("click", () => {
+        bulkMarkDone();
+        selectedIds.clear();
+        updateBulkBar();
+      });
+    }
+
+    if (bulkDeleteBtn) {
+      bulkDeleteBtn.addEventListener("click", () => {
+        bulkDelete();
+        selectedIds.clear();
+        updateBulkBar();
+      });
+    }
+
+    bulkPrioButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const prio = btn.dataset.bulkPriority;
+        if (!prio) return;
+        bulkSetPriority(prio);
+      });
+    });
   };
 
   /* ------------------ USER SWITCH ------------------ */
@@ -777,6 +1203,7 @@ export const Main = (() => {
     tasks = tasks.map((t, idx) => ensureTaskShape(t, idx));
     sortTasks();
     render();
+    rescheduleAllNotifications();
     const u = Auth.getUser();
     document.title = u ? `TodoHub — ${u.name}` : "TodoHub";
   };
@@ -785,6 +1212,7 @@ export const Main = (() => {
   const init = () => {
     bindUI();
     reloadForUser();
+    setupNotificationPermissionTrigger();
   };
 
   return {
@@ -805,12 +1233,17 @@ document.addEventListener("keydown", (e) => {
 
   // Alternar tema (tecla D)
   if (!e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "d") {
-    if (document.activeElement.tagName !== "INPUT" &&
-        document.activeElement.tagName !== "TEXTAREA") {
+    const tag = document.activeElement.tagName;
+    if (tag !== "INPUT" && tag !== "TEXTAREA") {
       Theme.toggle();
     }
   }
+
+  // Modo seleção (Shift + S)
+  if (e.shiftKey && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "s") {
+    e.preventDefault();
+    const btn = document.getElementById("selectionModeBtn");
+    btn?.click();
+  }
 });
-
-
 

@@ -99,7 +99,7 @@
     </form>
   </dialog>
 
-  <!-- Edit Task Modal (tags + datas) -->
+  <!-- Edit Task Modal (tags + datas + subtarefas) -->
   <dialog id="editDialog" class="edit-dialog">
     <form id="editForm" method="dialog" class="card edit-card">
       <h2>Editar tarefa</h2>
@@ -131,6 +131,17 @@
         <div>
           <span>Horário</span>
           <input type="time" id="editDueTime" />
+        </div>
+      </div>
+
+      <div class="field">
+        <span>Subtarefas</span>
+        <div id="subtasksContainer" class="subtask-editor">
+          <ul id="subtasksList" class="subtask-list modal-subtask-list"></ul>
+          <div class="subtask-add">
+            <input type="text" id="newSubtaskText" placeholder="Nova subtarefa" />
+            <button type="button" id="addSubtaskBtn">+</button>
+          </div>
         </div>
       </div>
 
@@ -238,6 +249,8 @@
     <div class="toolbar toolbar-bottom">
       <div class="toolbar-left">
         <button id="clearDoneBtn" class="btn subtle">🧹 Limpar concluídas</button>
+        <button id="selectionModeBtn" class="btn subtle">Selecionar tarefas</button>
+        <span class="toolbar-hint">Atalho: Shift + S</span>
       </div>
       <div class="toolbar-right">
         <button id="exportJsonBtn" class="btn subtle">Exportar JSON</button>
@@ -248,6 +261,23 @@
           Importar JSON
           <input id="importJsonInput" type="file" accept="application/json" hidden />
         </label>
+      </div>
+    </div>
+
+    <!-- Barra de ações em lote -->
+    <div id="bulkBar" class="bulk-bar hidden">
+      <div class="bulk-info">
+        <span id="bulkCount">0 tarefas selecionadas</span>
+        <button id="bulkExitBtn" class="btn subtle">Sair do modo seleção</button>
+      </div>
+      <div class="bulk-actions-buttons">
+        <span class="bulk-label">Prioridade:</span>
+        <button class="btn subtle bulk-prio" data-bulk-priority="high">Alta</button>
+        <button class="btn subtle bulk-prio" data-bulk-priority="medium">Média</button>
+        <button class="btn subtle bulk-prio" data-bulk-priority="low">Baixa</button>
+        <span class="bulk-sep"></span>
+        <button id="bulkDoneBtn" class="btn subtle">Marcar concluídas</button>
+        <button id="bulkDeleteBtn" class="btn subtle">Excluir</button>
       </div>
     </div>
 
@@ -279,5 +309,3 @@
 
 </body>
 </html>
-
-
