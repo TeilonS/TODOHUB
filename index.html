@@ -96,6 +96,32 @@
     </form>
   </dialog>
 
+  <!-- Edit Task Modal -->
+<dialog id="editDialog" class="edit-dialog">
+  <form id="editForm" method="dialog" class="card edit-card">
+    <h2>Editar tarefa</h2>
+
+    <label class="field">
+      <span>Texto</span>
+      <input type="text" id="editText" required />
+    </label>
+
+    <div class="field">
+      <span>Prioridade</span>
+      <div id="editPriorityPicker" class="priority-picker">
+        <button type="button" data-priority="high" class="prio-btn">🔴</button>
+        <button type="button" data-priority="medium" class="prio-btn">🟡</button>
+        <button type="button" data-priority="low" class="prio-btn">🟢</button>
+      </div>
+    </div>
+
+    <menu class="actions">
+      <button value="cancel">Cancelar</button>
+      <button id="editSaveBtn" type="submit" class="primary">Salvar</button>
+    </menu>
+  </form>
+</dialog>
+
   <!-- MAIN -->
   <main class="container">
 
