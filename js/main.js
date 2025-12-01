@@ -16,8 +16,6 @@ import {
   todayISODate
 } from './ui.js';
 
-import { Supabase } from './supabase.js';
-
 /* ========== ESTADO GLOBAL ========== */
 let lists = [];
 let currentListId = null;
@@ -29,8 +27,6 @@ let tagFilter = null;
 let searchQuery = '';
 let selectionMode = false;
 let selectedIds = new Set();
-
-let currentUserId = null; // usuário logado no Supabase (ou null se offline/local)
 
 /* ========== ELEMENTOS DOM ========== */
 
@@ -109,261 +105,27 @@ function findCurrentList() {
   return lists.find(l => l.id === currentListId) || null;
 }
 
-async function getCurrentUserId() {
-  try {
-    const { data, error } = await Supabase.client.auth.getUser();
-    if (error || !data?.user) return null;
-    return data.user.id;
-  } catch (err) {
-    console.warn('Erro ao obter usuário atual do Supabase:', err);
-    return null;
-  }
-}
-
-/* ========== SUPABASE: LISTAS ========== */
-
-async function fetchListsFromDB(userId) {
-  try {
-    const { data, error } = await Supabase.client
-      .from('users_lists')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.warn('Erro ao buscar listas no Supabase:', error);
-      return null;
-    }
-
-    return (data || []).map(row => ({
-      id: row.id,
-      name: row.name,
-      createdAt: row.created_at
-    }));
-  } catch (err) {
-    console.warn('Erro de rede ao buscar listas:', err);
-    return null;
-  }
-}
-
-async function createListInDB(userId, name) {
-  try {
-    const { data, error } = await Supabase.client
-      .from('users_lists')
-      .insert({
-        user_id: userId,
-        name
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.warn('Erro ao criar lista no Supabase:', error);
-      return null;
-    }
-
-    return {
-      id: data.id,
-      name: data.name,
-      createdAt: data.created_at
-    };
-  } catch (err) {
-    console.warn('Erro de rede ao criar lista:', err);
-    return null;
-  }
-}
-
-/* ========== SUPABASE: TAREFAS ========== */
-
-async function loadTasksForList(userId, listId) {
-  if (!listId) return [];
-
-  // Sem usuário → usa apenas localStorage
-  if (!userId) {
-    return loadTasks(listId);
-  }
-
-  try {
-    const { data, error } = await Supabase.client
-      .from('users_tasks')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('list_id', listId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.warn('Erro ao buscar tarefas no Supabase:', error);
-      return loadTasks(listId);
-    }
-
-    const mapped = (data || []).map(row => ({
-      id: row.id,
-      text: row.text,
-      done: row.done,
-      priority: row.priority || 'medium',
-      tags: row.tags || [],
-      dueDate: row.due_date,
-      dueTime: row.due_time,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      subtasks: row.subtasks || []
-    }));
-
-    // espelho local
-    saveTasks(listId, mapped);
-    return mapped;
-  } catch (err) {
-    console.warn('Erro de rede ao buscar tarefas:', err);
-    return loadTasks(listId);
-  }
-}
-
-async function createTaskInDB(task) {
-  if (!currentUserId || !currentListId) return;
-
-  try {
-    const { error } = await Supabase.client
-      .from('users_tasks')
-      .insert({
-        id: task.id,          // usamos o mesmo id do app
-        user_id: currentUserId,
-        list_id: currentListId,
-        text: task.text,
-        done: task.done,
-        priority: task.priority,
-        tags: task.tags,
-        due_date: task.dueDate,
-        due_time: task.dueTime,
-        subtasks: task.subtasks,
-        created_at: task.createdAt,
-        updated_at: task.updatedAt
-      });
-
-    if (error) {
-      console.warn('Erro ao criar tarefa no Supabase:', error);
-    }
-  } catch (err) {
-    console.warn('Erro de rede ao criar tarefa:', err);
-  }
-}
-
-async function updateTaskInDB(task) {
-  if (!currentUserId || !currentListId) return;
-
-  try {
-    const { error } = await Supabase.client
-      .from('users_tasks')
-      .update({
-        text: task.text,
-        done: task.done,
-        priority: task.priority,
-        tags: task.tags,
-        due_date: task.dueDate,
-        due_time: task.dueTime,
-        subtasks: task.subtasks,
-        updated_at: task.updatedAt
-      })
-      .eq('id', task.id)
-      .eq('user_id', currentUserId)
-      .eq('list_id', currentListId);
-
-    if (error) {
-      console.warn('Erro ao atualizar tarefa no Supabase:', error);
-    }
-  } catch (err) {
-    console.warn('Erro de rede ao atualizar tarefa:', err);
-  }
-}
-
-async function deleteTaskInDB(taskId) {
-  if (!currentUserId || !currentListId) return;
-
-  try {
-    const { error } = await Supabase.client
-      .from('users_tasks')
-      .delete()
-      .eq('id', taskId)
-      .eq('user_id', currentUserId)
-      .eq('list_id', currentListId);
-
-    if (error) {
-      console.warn('Erro ao deletar tarefa no Supabase:', error);
-    }
-  } catch (err) {
-    console.warn('Erro de rede ao deletar tarefa:', err);
-  }
-}
-
-async function deleteDoneTasksInDB() {
-  if (!currentUserId || !currentListId) return;
-
-  try {
-    const { error } = await Supabase.client
-      .from('users_tasks')
-      .delete()
-      .eq('user_id', currentUserId)
-      .eq('list_id', currentListId)
-      .eq('done', true);
-
-    if (error) {
-      console.warn('Erro ao deletar tarefas concluídas no Supabase:', error);
-    }
-  } catch (err) {
-    console.warn('Erro de rede ao deletar concluídas:', err);
-  }
-}
-
 /* ========== LISTAS / SIDEBAR ========== */
 
-async function ensureLists() {
-  // Se não tiver user logado, mantém comportamento local anterior
-  if (!currentUserId) {
-    lists = loadLists();
+function ensureLists() {
+  lists = loadLists();
 
-    if (!lists || !Array.isArray(lists) || lists.length === 0) {
-      const defaultList = {
-        id: uuid(),
-        name: 'Minha lista',
-        createdAt: new Date().toISOString()
-      };
-      lists = [defaultList];
-      saveLists(lists);
-      currentListId = defaultList.id;
-      saveCurrentListId(currentListId);
-    } else {
-      currentListId = loadCurrentListId() || lists[0].id;
-      saveCurrentListId(currentListId);
-    }
-
-    tasks = loadTasks(currentListId);
-    return;
-  }
-
-  // Com user logado → busca listas do Supabase
-  const remoteLists = await fetchListsFromDB(currentUserId);
-
-  if (!remoteLists || remoteLists.length === 0) {
-    // Cria lista padrão no Supabase
-    const created = await createListInDB(currentUserId, 'Minha lista');
-    const defaultList = created || {
+  if (!lists || !Array.isArray(lists) || lists.length === 0) {
+    const defaultList = {
       id: uuid(),
       name: 'Minha lista',
       createdAt: new Date().toISOString()
     };
     lists = [defaultList];
+    saveLists(lists);
+    currentListId = defaultList.id;
+    saveCurrentListId(currentListId);
   } else {
-    lists = remoteLists;
-  }
-
-  saveLists(lists);
-
-  currentListId = loadCurrentListId() || (lists[0] && lists[0].id);
-  if (!currentListId && lists[0]) {
-    currentListId = lists[0].id;
+    currentListId = loadCurrentListId() || lists[0].id;
     saveCurrentListId(currentListId);
   }
 
-  tasks = await loadTasksForList(currentUserId, currentListId);
+  tasks = loadTasks(currentListId);
 }
 
 function renderSidebar() {
@@ -380,8 +142,8 @@ function renderSidebar() {
   });
 }
 
-async function initSidebar() {
-  await ensureLists();
+function initSidebar() {
+  ensureLists();
   renderSidebar();
 
   if (openSidebarBtn && sidebarEl) {
@@ -397,7 +159,7 @@ async function initSidebar() {
   }
 
   if (listContainerEl) {
-    listContainerEl.addEventListener('click', async (e) => {
+    listContainerEl.addEventListener('click', (e) => {
       const item = e.target.closest('.sidebar-item');
       if (!item) return;
 
@@ -406,10 +168,7 @@ async function initSidebar() {
 
       currentListId = id;
       saveCurrentListId(id);
-
-      // Carrega tarefas da lista selecionada (Supabase ou local)
-      tasks = await loadTasksForList(currentUserId, currentListId);
-
+      tasks = loadTasks(currentListId);
       selectedIds.clear();
       renderSidebar();
       renderTasks();
@@ -420,30 +179,15 @@ async function initSidebar() {
   }
 
   if (newListBtn) {
-    newListBtn.addEventListener('click', async () => {
+    newListBtn.addEventListener('click', () => {
       const name = prompt('Nome da nova lista:');
       if (!name) return;
 
-      const trimmed = name.trim();
-      if (!trimmed) return;
-
-      let newList;
-
-      if (currentUserId) {
-        const created = await createListInDB(currentUserId, trimmed);
-        newList = created || {
-          id: uuid(),
-          name: trimmed,
-          createdAt: new Date().toISOString()
-        };
-      } else {
-        newList = {
-          id: uuid(),
-          name: trimmed,
-          createdAt: new Date().toISOString()
-        };
-      }
-
+      const newList = {
+        id: uuid(),
+        name: name.trim(),
+        createdAt: new Date().toISOString()
+      };
       lists.push(newList);
       saveLists(lists);
 
@@ -503,7 +247,7 @@ function initPriorityPicker() {
 
 /* ========== TAREFAS: ADIÇÃO ========== */
 
-async function addTask() {
+function addTask() {
   const text = taskInputEl?.value.trim();
   if (!text) {
     showToast('Digite uma tarefa.', 'warn');
@@ -527,10 +271,6 @@ async function addTask() {
 
   tasks.push(task);
   saveTasks(currentListId, tasks);
-
-  // Envia para Supabase (se usuário logado)
-  await createTaskInDB(task);
-
   taskInputEl.value = '';
 
   renderTasks();
@@ -540,7 +280,7 @@ async function addTask() {
 
 function initTaskForm() {
   if (addTaskBtn) {
-    addTaskBtn.addEventListener('click', () => { addTask(); });
+    addTaskBtn.addEventListener('click', () => addTask());
   }
 
   if (taskInputEl) {
@@ -640,21 +380,12 @@ function initBulkActions() {
   }
 
   if (bulkDoneBtn) {
-    bulkDoneBtn.addEventListener('click', async () => {
+    bulkDoneBtn.addEventListener('click', () => {
       if (!selectedIds.size) return;
-      const now = new Date().toISOString();
-
       tasks = tasks.map(t =>
-        selectedIds.has(t.id) ? { ...t, done: true, updatedAt: now } : t
+        selectedIds.has(t.id) ? { ...t, done: true, updatedAt: new Date().toISOString() } : t
       );
       saveTasks(currentListId, tasks);
-
-      // Atualiza no Supabase
-      const toUpdate = tasks.filter(t => selectedIds.has(t.id));
-      for (const t of toUpdate) {
-        await updateTaskInDB(t);
-      }
-
       selectedIds.clear();
       updateBulkBar();
       renderTasks();
@@ -664,20 +395,12 @@ function initBulkActions() {
   }
 
   if (bulkDeleteBtn) {
-    bulkDeleteBtn.addEventListener('click', async () => {
+    bulkDeleteBtn.addEventListener('click', () => {
       if (!selectedIds.size) return;
       if (!confirm('Excluir todas as tarefas selecionadas?')) return;
 
-      const idsToDelete = Array.from(selectedIds);
-
       tasks = tasks.filter(t => !selectedIds.has(t.id));
       saveTasks(currentListId, tasks);
-
-      // Supabase
-      for (const id of idsToDelete) {
-        await deleteTaskInDB(id);
-      }
-
       selectedIds.clear();
       updateBulkBar();
       renderTasks();
@@ -687,7 +410,7 @@ function initBulkActions() {
   }
 
   bulkPrioButtons.forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const prio = btn.dataset.bulkPriority;
       if (!prio || !selectedIds.size) return;
 
@@ -700,12 +423,6 @@ function initBulkActions() {
       );
 
       saveTasks(currentListId, tasks);
-
-      const toUpdate = tasks.filter(t => selectedIds.has(t.id));
-      for (const t of toUpdate) {
-        await updateTaskInDB(t);
-      }
-
       renderTasks();
       updateStats();
       showToast(`Prioridade atualizada para ${prio}.`, 'success');
@@ -797,7 +514,7 @@ function initEditModal() {
     });
   }
 
-  editForm.addEventListener('submit', async (e) => {
+  editForm.addEventListener('submit', (e) => {
     e.preventDefault();
     if (!currentEditTaskId) return;
 
@@ -817,32 +534,22 @@ function initEditModal() {
 
     const now = new Date().toISOString();
 
-    let updatedTask = null;
-
-    tasks = tasks.map(t => {
-      if (t.id === currentEditTaskId) {
-        const newT = {
-          ...t,
-          text,
-          priority: editTaskPriority,
-          tags,
-          dueDate,
-          dueTime,
-          subtasks: editSubtasks,
-          updatedAt: now
-        };
-        updatedTask = newT;
-        return newT;
-      }
-      return t;
-    });
+    tasks = tasks.map(t =>
+      t.id === currentEditTaskId
+        ? {
+            ...t,
+            text,
+            priority: editTaskPriority,
+            tags,
+            dueDate,
+            dueTime,
+            subtasks: editSubtasks,
+            updatedAt: now
+          }
+        : t
+    );
 
     saveTasks(currentListId, tasks);
-
-    if (updatedTask) {
-      await updateTaskInDB(updatedTask);
-    }
-
     editDialog.close();
     currentEditTaskId = null;
     renderTasks();
@@ -986,7 +693,7 @@ function initTaskListEvents() {
   if (!taskListEl) return;
 
   // Toggle done
-  taskListEl.addEventListener('change', async (e) => {
+  taskListEl.addEventListener('change', (e) => {
     const checkbox = e.target.closest('.task-toggle');
     if (!checkbox) return;
 
@@ -997,48 +704,18 @@ function initTaskListEvents() {
     const done = checkbox.checked;
     const now = new Date().toISOString();
 
-    let updatedTask = null;
-
-    tasks = tasks.map(t => {
-      if (t.id === id) {
-        const newT = { ...t, done, updatedAt: now };
-        updatedTask = newT;
-        return newT;
-      }
-      return t;
-    });
-
+    tasks = tasks.map(t =>
+      t.id === id ? { ...t, done, updatedAt: now } : t
+    );
     saveTasks(currentListId, tasks);
-
-    if (updatedTask) {
-      await updateTaskInDB(updatedTask);
-    }
 
     renderTasks();
     updateStats();
   });
 
-  // Ações: editar / excluir / selecionar / tags
-  taskListEl.addEventListener('click', async (e) => {
+  // Ações: editar / excluir / selecionar
+  taskListEl.addEventListener('click', (e) => {
     const button = e.target.closest('button');
-    const tagChip = e.target.closest('.tag-chip');
-
-    // Clique em tag
-    if (tagChip) {
-      const tag = tagChip.dataset.tag;
-      if (!tag) return;
-
-      if (tagFilter === tag) {
-        tagFilter = null;
-        showToast('Filtro de tag removido.', 'success');
-      } else {
-        tagFilter = tag;
-        showToast(`Filtrando pela tag: ${tag}`, 'success');
-      }
-      renderTasks();
-      return;
-    }
-
     if (!button) return;
 
     const item = button.closest('.item');
@@ -1050,12 +727,8 @@ function initTaskListEvents() {
 
     if (action === 'delete') {
       if (!confirm('Excluir esta tarefa?')) return;
-
       tasks = tasks.filter(t => t.id !== id);
       saveTasks(currentListId, tasks);
-
-      await deleteTaskInDB(id);
-
       selectedIds.delete(id);
       renderTasks();
       updateStats();
@@ -1078,6 +751,24 @@ function initTaskListEvents() {
       renderTasks();
       return;
     }
+  });
+
+  // Clique em tags
+  taskListEl.addEventListener('click', (e) => {
+    const tagChip = e.target.closest('.tag-chip');
+    if (!tagChip) return;
+
+    const tag = tagChip.dataset.tag;
+    if (!tag) return;
+
+    if (tagFilter === tag) {
+      tagFilter = null;
+      showToast('Filtro de tag removido.', 'success');
+    } else {
+      tagFilter = tag;
+      showToast(`Filtrando pela tag: ${tag}`, 'success');
+    }
+    renderTasks();
   });
 }
 
@@ -1116,7 +807,7 @@ function updateStats() {
 function initClearDone() {
   if (!clearDoneBtn) return;
 
-  clearDoneBtn.addEventListener('click', async () => {
+  clearDoneBtn.addEventListener('click', () => {
     if (!tasks.some(t => t.done)) {
       showToast('Não há tarefas concluídas para limpar.', 'warn');
       return;
@@ -1126,9 +817,6 @@ function initClearDone() {
 
     tasks = tasks.filter(t => !t.done);
     saveTasks(currentListId, tasks);
-
-    await deleteDoneTasksInDB();
-
     renderTasks();
     updateStats();
     showToast('Tarefas concluídas removidas.', 'success');
@@ -1219,12 +907,12 @@ function initExportImport() {
   }
 
   if (importJsonInput) {
-    importJsonInput.addEventListener('change', async (e) => {
+    importJsonInput.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = async (event) => {
+      reader.onload = (event) => {
         try {
           const content = event.target.result;
           const parsed = JSON.parse(content);
@@ -1238,6 +926,7 @@ function initExportImport() {
             throw new Error('Formato inválido');
           }
 
+          // tentativa de normalizar
           importedTasks = importedTasks.map(t => ({
             id: t.id || uuid(),
             text: t.text || '',
@@ -1257,40 +946,6 @@ function initExportImport() {
 
           tasks = importedTasks;
           saveTasks(currentListId, tasks);
-
-          // Sobe pro Supabase (se logado)
-          if (currentUserId && currentListId) {
-            // apaga tarefas existentes dessa lista no Supabase e reimporta
-            try {
-              await Supabase.client
-                .from('users_tasks')
-                .delete()
-                .eq('user_id', currentUserId)
-                .eq('list_id', currentListId);
-
-              const payload = importedTasks.map(t => ({
-                id: t.id,
-                user_id: currentUserId,
-                list_id: currentListId,
-                text: t.text,
-                done: t.done,
-                priority: t.priority,
-                tags: t.tags,
-                due_date: t.dueDate,
-                due_time: t.dueTime,
-                subtasks: t.subtasks,
-                created_at: t.createdAt,
-                updated_at: t.updatedAt
-              }));
-
-              if (payload.length) {
-                await Supabase.client.from('users_tasks').insert(payload);
-              }
-            } catch (err) {
-              console.warn('Erro ao sincronizar importação com Supabase:', err);
-            }
-          }
-
           renderTasks();
           updateStats();
           showToast('Tarefas importadas com sucesso.', 'success');
@@ -1309,10 +964,8 @@ function initExportImport() {
 
 /* ========== INICIALIZAÇÃO GERAL ========== */
 
-async function initApp() {
-  currentUserId = await getCurrentUserId();
-
-  await initSidebar();
+function initApp() {
+  initSidebar();
   initPriorityPicker();
   initTaskForm();
   initFilters();
@@ -1326,22 +979,15 @@ async function initApp() {
   updateStats();
 }
 
-// Função para o auth.js chamar depois de login/signup
-async function reloadForUser() {
-  currentUserId = await getCurrentUserId();
-  await ensureLists();
-  renderSidebar();
-  tasks = await loadTasksForList(currentUserId, currentListId);
-  renderTasks();
-  updateStats();
-  showToast('Dados sincronizados para o seu usuário.', 'success');
-}
-
-// Exporta para o auth.js
+/* ========== EXPORT PARA O AUTH.JS USAR ========== */
+// Agora o auth.js consegue chamar Main.reloadForUser()
 export const Main = {
-  reloadForUser
+  reloadForUser() {
+    // No futuro podemos recarregar dados do Supabase aqui.
+    // Por enquanto, recarrega a página inteira.
+    window.location.reload();
+  }
 };
 
 // DOM já está pronto porque os scripts estão no final do <body>
 initApp();
-
