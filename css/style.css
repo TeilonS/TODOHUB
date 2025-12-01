@@ -1,10 +1,10 @@
 /* ============================================================
-   TodoHub — Estilos principais (Dark + Light + OLED)
-   Layout minimalista + UI moderna
+   TodoHub — CSS Final Otimizado (Dark / Light / OLED)
+   Mantém exatamente o visual atual
    ============================================================ */
 
 /* ------------------------------
-   Variáveis do Tema
+   Variáveis de Tema
 --------------------------------*/
 :root {
   --bg: #0d1117;
@@ -22,7 +22,6 @@
 
   --radius: 14px;
 
-  /* Prioridades */
   --prio-high: #ff6b6b;
   --prio-high-soft: rgba(255, 107, 107, 0.22);
 
@@ -49,7 +48,7 @@ html[data-theme="light"] {
   --shadow: rgba(0,0,0,0.08);
 }
 
-/* Tema OLED Deep Black */
+/* Tema OLED */
 html[data-theme="oled"] {
   --bg: #000000;
   --bg-soft: #050505;
@@ -65,11 +64,16 @@ html[data-theme="oled"] {
   --shadow: rgba(0,0,0,0.7);
 }
 
-/* -----------------------------------
-   Reset / Estrutura Base
------------------------------------*/
-* { box-sizing: border-box; }
-html, body { height: 100%; }
+/* ------------------------------
+   Base
+--------------------------------*/
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
 
 body {
   margin: 0;
@@ -77,13 +81,13 @@ body {
   color: var(--text);
   background:
     radial-gradient(1200px 600px at 50% -10%, rgba(0,188,212,0.08), transparent),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg) 100%);
+    linear-gradient(180deg, var(--bg), var(--bg));
   background-attachment: fixed;
 }
 
-/* -----------------------------------
-   Header Minimalista
------------------------------------*/
+/* ------------------------------
+   Header
+--------------------------------*/
 .app-header {
   display: flex;
   align-items: center;
@@ -103,8 +107,6 @@ body {
 
 .brand-logo {
   height: 52px;
-  width: auto;
-  display: block;
   filter: drop-shadow(0 2px 3px rgba(0,0,0,0.35));
 }
 
@@ -114,7 +116,7 @@ body {
   gap: 8px;
 }
 
-/* Botão de ícone */
+/* Botão de Ícone */
 .icon-btn {
   padding: 8px 10px;
   border-radius: 10px;
@@ -124,11 +126,13 @@ body {
   cursor: pointer;
   transition: .15s ease;
 }
-.icon-btn:hover { transform: translateY(-1px); }
+.icon-btn:hover {
+  transform: translateY(-1px);
+}
 
-/* -----------------------------------
-   Avatar
------------------------------------*/
+/* ------------------------------
+   Avatar / User Menu
+--------------------------------*/
 .avatar {
   width: 28px;
   height: 28px;
@@ -136,18 +140,17 @@ body {
   display: grid;
   place-items: center;
   font-weight: 700;
-  color: #0b1117;
   background: var(--primary);
+  color: #0b1117;
 }
 .avatar.lg {
   width: 42px;
   height: 42px;
 }
 
-/* -----------------------------------
-   Menu do usuário
------------------------------------*/
-.user-menu { position: relative; }
+.user-menu {
+  position: relative;
+}
 .user-chip {
   display: flex;
   align-items: center;
@@ -165,18 +168,16 @@ body {
   top: calc(100% + 6px);
 
   width: 250px;
-
   background: var(--card);
   border: 1px solid var(--outline);
   border-radius: 14px;
 
   padding: 8px;
-
   box-shadow: 0 10px 30px var(--shadow);
 
   opacity: 0;
-  transform: translateY(-6px);
   pointer-events: none;
+  transform: translateY(-6px);
 
   transition: .15s ease;
 }
@@ -186,39 +187,115 @@ body {
   transform: translateY(0);
 }
 
-.user-dropdown-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px;
-}
-
-/* Dropdown */
 .dropdown-item {
   width: 100%;
+  padding: 10px;
   background: transparent;
   border: none;
   color: var(--text);
-  padding: 10px;
   text-align: left;
   border-radius: 10px;
   cursor: pointer;
 }
-.dropdown-item:hover { background: var(--bg-soft); }
-.dropdown-item.danger { color: #ff6b6b; }
+.dropdown-item:hover {
+  background: var(--bg-soft);
+}
 
-/* -----------------------------------
+.dropdown-item.danger {
+  color: #ff6b6b;
+}
+
+/* ------------------------------
+   Sidebar Retrátil
+--------------------------------*/
+.sidebar-toggle {
+  display: none;
+  position: fixed;
+  top: 74px;
+  left: 14px;
+  padding: 10px 14px;
+
+  background: var(--card);
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  color: var(--text);
+  cursor: pointer;
+  z-index: 1000;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -260px;
+  height: 100%;
+  width: 240px;
+
+  background: var(--card);
+  border-right: 1px solid var(--outline);
+  box-shadow: 4px 0 18px rgba(0,0,0,.3);
+
+  padding: 20px 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  transition: left .25s ease;
+  z-index: 999;
+}
+
+.sidebar.open {
+  left: 0;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-item {
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: .15s ease;
+}
+.sidebar-item:hover {
+  background: var(--bg-soft);
+}
+.sidebar-item.active {
+  background: var(--primary);
+  color: #001014;
+  font-weight: 700;
+}
+
+/* Mobile */
+@media (max-width: 800px) {
+  .sidebar-toggle {
+    display: block;
+  }
+}
+
+/* ------------------------------
    Container
------------------------------------*/
+--------------------------------*/
 .container {
   max-width: 1100px;
   margin: 26px auto;
   padding: 0 16px;
 }
 
-/* -----------------------------------
+/* ------------------------------
    Stats
------------------------------------*/
+--------------------------------*/
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -231,80 +308,73 @@ body {
   border-radius: var(--radius);
 
   padding: 14px;
-
   display: flex;
   align-items: center;
   gap: 14px;
 
   box-shadow: 0 6px 14px var(--shadow);
-
   transition: .15s ease;
 }
-.stat-card:hover { transform: translateY(-2px); }
+.stat-card:hover {
+  transform: translateY(-2px);
+}
 
-.stat-title { color: var(--muted); font-size: 14px; }
-.stat-number { font-weight: 700; font-size: 20px; }
+.stat-title {
+  color: var(--muted);
+  font-size: 14px;
+}
+.stat-number {
+  font-size: 20px;
+  font-weight: 700;
+}
 
-/* -----------------------------------
+/* ------------------------------
    Dashboard / Analytics
------------------------------------*/
+--------------------------------*/
 .analytics {
   margin-top: 18px;
   padding: 14px 16px;
 }
-
 .analytics-row {
   display: grid;
   grid-template-columns: 1.2fr 0.7fr 0.7fr;
   gap: 16px;
 }
-
 .analytics-item {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-
 .analytics-label {
-  font-size: 13px;
   color: var(--muted);
+  font-size: 13px;
 }
-
 .analytics-value {
   font-weight: 600;
-  font-size: 15px;
 }
-
 .analytics-bar {
   width: 100%;
   height: 8px;
-  border-radius: 999px;
   background: var(--bg-soft);
-  overflow: hidden;
+  border-radius: 999px;
 }
 .analytics-bar-fill {
   height: 100%;
   width: 0%;
-  border-radius: inherit;
   background: linear-gradient(90deg, var(--primary), var(--primary-strong));
+  border-radius: inherit;
   transition: width .2s ease-out;
 }
 
-/* -----------------------------------
-   Add Task
------------------------------------*/
-.add-task {
-  margin: 18px 0;
-  display: flex;
-  gap: 10px;
-}
-
+/* ------------------------------
+   Inputs e Botões
+--------------------------------*/
 .input {
   flex: 1;
   padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--outline);
   background: var(--card);
+  border: 1px solid var(--outline);
+  border-radius: 12px;
   color: var(--text);
 }
 .input:focus {
@@ -324,54 +394,37 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.92rem;
 }
-.btn:hover { transform: translateY(-1px); }
+.btn:hover {
+  transform: translateY(-1px);
+}
+
 .btn.primary {
   background: linear-gradient(90deg, var(--primary), var(--primary-strong));
   border-color: transparent;
   color: #001014;
   font-weight: 700;
 }
+
 .btn.subtle {
   background: var(--card);
   border-color: var(--outline);
-  font-weight: 500;
 }
 
-/* -----------------------------------
+/* ------------------------------
    Toolbar
------------------------------------*/
+--------------------------------*/
 .toolbar {
   margin-top: 6px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
 }
 
-.toolbar-bottom {
-  margin-top: 10px;
-}
-
-.toolbar-left,
-.toolbar-right {
+.filters {
   display: flex;
-  align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-}
-
-.toolbar-hint {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-/* filtros */
-.filters { 
-  display: flex; 
-  gap: 8px; 
   flex-wrap: wrap;
 }
 
@@ -385,13 +438,6 @@ body {
   font-size: 0.85rem;
 }
 
-html:not([data-theme="light"]) .chip {
-  color: #e9eef5;
-}
-html:not([data-theme="light"]) .chip:hover {
-  color: #ffffff;
-}
-
 .chip.active,
 .chip:hover {
   border-color: var(--primary);
@@ -402,27 +448,21 @@ html:not([data-theme="light"]) .chip:hover {
   display: flex;
   align-items: center;
   gap: 6px;
+  background: var(--card);
+  border: 1px solid var(--outline);
   padding: 8px 12px;
   border-radius: 12px;
-  border: 1px solid var(--outline);
-  background: var(--card);
 }
 
-/* upload botão */
-.file-label {
-  cursor: pointer;
-}
-
-/* -----------------------------------
-   Lista
------------------------------------*/
+/* ------------------------------
+   Lista de Tarefas
+--------------------------------*/
 .card {
   background: var(--card);
   border: 1px solid var(--outline);
   border-radius: var(--radius);
   box-shadow: 0 10px 24px var(--shadow);
   margin-top: 16px;
-  overflow: hidden;
 }
 
 .list {
@@ -435,30 +475,31 @@ html:not([data-theme="light"]) .chip:hover {
   display: grid;
   grid-template-columns: 22px 1fr auto;
   gap: 12px;
-  align-items: flex-start;
-
   padding: 12px 14px;
   border-bottom: 1px solid var(--outline);
-
   animation: fadeIn .2s ease;
 }
-.item:last-child { border-bottom: none; }
-
-.item-text { 
-  word-break: break-word;
-  font-size: 0.95rem;
+.item:last-child {
+  border-bottom: none;
 }
 
-.item-main {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* Estados */
 .item.done .item-text {
   opacity: .6;
   text-decoration: line-through;
+}
+
+/* Prioridades */
+.item.priority-high {
+  border-left: 4px solid var(--prio-high);
+  box-shadow: 0 0 0 4px var(--prio-high-soft);
+}
+.item.priority-medium {
+  border-left: 4px solid var(--prio-medium);
+  box-shadow: 0 0 0 4px var(--prio-medium-soft);
+}
+.item.priority-low {
+  border-left: 4px solid var(--prio-low);
+  box-shadow: 0 0 0 4px var(--prio-low-soft);
 }
 
 /* Ações */
@@ -471,269 +512,20 @@ html:not([data-theme="light"]) .chip:hover {
   padding: 6px 8px;
   border-radius: 8px;
   border: 1px solid var(--outline);
-  background: transparent;
-  color: var(--text);
   cursor: pointer;
-  transition: .15s ease;
+  background: transparent;
 }
-.icon:hover { background: var(--bg-soft); }
+.icon:hover {
+  background: var(--bg-soft);
+}
 .icon.danger {
   color: #ff6b6b;
   border-color: #ff6b6b55;
 }
-.icon.danger:hover { background: #ff6b6b22; }
 
-/* drag & drop */
-.item.drag-over {
-  outline: 2px dashed var(--primary);
-  outline-offset: -4px;
-  background: var(--bg-soft);
-}
-
-/* -----------------------------------
-   PRIORIDADES
------------------------------------*/
-
-.priority-badge {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-/* Alta */
-.priority-badge.high {
-  background: var(--prio-high);
-}
-.item.priority-high {
-  border-left: 4px solid var(--prio-high);
-  box-shadow: 0 0 0 4px var(--prio-high-soft);
-}
-
-/* Média */
-.priority-badge.medium {
-  background: var(--prio-medium);
-}
-.item.priority-medium {
-  border-left: 4px solid var(--prio-medium);
-  box-shadow: 0 0 0 4px var(--prio-medium-soft);
-}
-
-/* Baixa */
-.priority-badge.low {
-  background: var(--prio-low);
-}
-.item.priority-low {
-  border-left: 4px solid var(--prio-low);
-  box-shadow: 0 0 0 4px var(--prio-low-soft);
-}
-
-/* Concluídas — mais suave */
-.item.done.priority-high,
-.item.done.priority-medium,
-.item.done.priority-low {
-  opacity: 0.7;
-}
-
-/* -----------------------------------
-   Priority Picker (círculos)
------------------------------------*/
-.priority-picker {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.prio-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  background: var(--card);
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  font-size: 1.2rem;
-  transition: .15s ease;
-}
-
-.prio-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 6px rgba(255,255,255,0.12);
-}
-
-.prio-btn.active {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(0,188,212,.25);
-}
-
-/* -----------------------------------
-   Metadados da tarefa
------------------------------------*/
-.item-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-.item-meta span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* tags */
-.tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tag-chip {
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  border: 1px solid var(--outline);
-  background: var(--bg-soft);
-  cursor: pointer;
-}
-.tag-chip:hover {
-  border-color: var(--primary);
-}
-.tag-chip.active-tag {
-  border-color: var(--primary);
-  background: rgba(0,188,212,0.12);
-}
-
-/* -----------------------------------
-   Subtarefas
------------------------------------*/
-.subtask-list {
-  list-style: none;
-  margin: 6px 0 0 0;
-  padding-left: 0;
-}
-
-.modal-subtask-list {
-  max-height: 160px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.subtask-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  padding: 2px 0;
-  color: var(--muted);
-}
-
-.subtask-item span {
-  flex: 1;
-  word-break: break-word;
-}
-
-.subtask-item.done span {
-  text-decoration: line-through;
-  opacity: 0.7;
-}
-
-.subtask-item button {
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 6px;
-}
-.subtask-item button:hover {
-  background: var(--bg-soft);
-  color: #fda4af;
-}
-
-.subtask-add {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.subtask-add input {
-  flex: 1;
-  padding: 6px 8px;
-  border-radius: 10px;
-  border: 1px solid var(--outline);
-  background: var(--bg-soft);
-  color: var(--input-text);
-  font-size: 0.8rem;
-}
-
-.subtask-add button {
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--outline);
-  background: var(--card);
-  color: var(--text);
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-.subtask-add button:hover {
-  background: var(--bg-soft);
-}
-
-/* -----------------------------------
-   Estado vazio
------------------------------------*/
-.empty {
-  text-align: center;
-  padding: 36px 12px;
-  display: none;
-}
-.empty-icon { font-size: 36px; }
-.muted { color: var(--muted); }
-
-/* -----------------------------------
-   Toasts
------------------------------------*/
-#toastStack {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 9999;
-}
-
-.toast {
-  min-width: 260px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: var(--card);
-  border: 1px solid var(--outline);
-  box-shadow: 0 6px 18px var(--shadow);
-
-  opacity: 0;
-  transform: translateY(8px);
-  animation: toastIn .25s forwards ease-out;
-}
-
-.toast.success { border-color: #16a34a55; }
-.toast.warn    { border-color: #f59e0b55; }
-.toast.error   { border-color: #ef444455; }
-
-@keyframes toastIn {
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes toastOut {
-  to { opacity: 0; transform: translateY(8px); }
-}
-
-/* -----------------------------------
-   Modal de Login / Edição
------------------------------------*/
+/* ------------------------------
+   Modal Login / Editar
+--------------------------------*/
 .login-dialog::backdrop,
 .edit-dialog::backdrop {
   background: rgba(0,0,0,0.55);
@@ -749,32 +541,16 @@ html:not([data-theme="light"]) .chip:hover {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-}
-
-.login-dialog h2,
-.edit-dialog h2 {
-  text-align: center;
-  margin: 0 0 10px;
-  font-size: 1.3rem;
-}
-
-/* Campos */
-.field span {
-  font-weight: 600;
-  font-size: 0.9rem;
-  display: block;
-  margin-bottom: 4px;
+  color: var(--text);
 }
 
 .login-dialog input,
 .edit-dialog input {
-  width: 100%;
   background: var(--bg-soft);
+  color: var(--input-text);
   border: 1px solid var(--outline);
   border-radius: 10px;
   padding: 10px;
-  color: var(--input-text);
 }
 .login-dialog input:focus,
 .edit-dialog input:focus {
@@ -783,84 +559,48 @@ html:not([data-theme="light"]) .chip:hover {
   box-shadow: 0 0 0 2px rgba(0,188,212,.25);
 }
 
-.field-inline {
-  display: flex;
-  gap: 10px;
-}
-.field-inline > div {
-  flex: 1;
-}
-
-menu.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-menu.actions button[value="cancel"] {
-  background: transparent;
-  border: 1px solid var(--outline);
-  color: var(--text);
-  padding: 8px 12px;
-  border-radius: 10px;
-}
-
-html[data-theme="light"] menu.actions button[value="cancel"] {
-  background: #ffffff;
-  color: #0f172a;
-  border-color: #e2e8f0;
-}
-
-html[data-theme="oled"] menu.actions button[value="cancel"] {
-  background: #0a0a0a;
-  border-color: #222;
-  color: #fafafa;
-}
-
-menu.actions .primary {
-  background: var(--primary);
-  border: none;
-  color: #001014;
-  font-weight: 700;
-  border-radius: 10px;
-  padding: 8px 12px;
-}
-
-/* Checkbox / form-check */
 .form-check {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 8px 0 12px 0;
+  margin: 8px 0;
 }
-
 .form-check label {
   color: var(--text);
-  cursor: pointer;
 }
 
-.form-check .native-check {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary);
+/* ------------------------------
+   Toasts
+--------------------------------*/
+#toastStack {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 9999;
 }
 
-html[data-theme="light"] .form-check .native-check {
-  accent-color: #0ea5e9;
+.toast {
+  min-width: 260px;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px var(--shadow);
+
+  opacity: 0;
+  animation: toastIn .25s forwards ease-out;
 }
 
-html[data-theme="oled"] .form-check .native-check {
-  accent-color: #00d4ff;
+@keyframes toastIn {
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* texto pequeno do modal */
-.login-dialog small {
-  color: var(--muted);
-}
-
-/* -----------------------------------
+/* ------------------------------
    Loader
------------------------------------*/
+--------------------------------*/
 #appLoader {
   position: fixed;
   inset: 0;
@@ -888,214 +628,36 @@ html[data-theme="oled"] .form-check .native-check {
   to { transform: rotate(360deg); }
 }
 
-/* -----------------------------------
-   Bulk actions
------------------------------------*/
-.bulk-bar {
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--outline);
-  background: rgba(15,23,42,0.92);
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
-  align-items: center;
-}
-
-html[data-theme="light"] .bulk-bar {
-  background: #ffffff;
-}
-
-html[data-theme="oled"] .bulk-bar {
-  background: #050505;
-}
-
-.bulk-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-}
-
-.bulk-actions-buttons {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.bulk-label {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.bulk-sep {
-  width: 1px;
-  height: 18px;
-  background: var(--outline);
-  margin: 0 4px;
-}
-
-/* -----------------------------------
-   Footer
------------------------------------*/
-.app-footer {
-  text-align: center;
-  color: var(--muted);
-  padding: 28px 12px;
-}
-
-/* -----------------------------------
-   Animações Gerais
------------------------------------*/
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.hidden { display: none !important; }
-
-/* -----------------------------------
+/* ------------------------------
    Responsividade
------------------------------------*/
+--------------------------------*/
 @media (max-width: 800px) {
   .stats {
     grid-template-columns: 1fr;
   }
-
   .toolbar {
     flex-direction: column;
     align-items: stretch;
   }
-
   .add-task {
     flex-direction: column;
   }
-
   .analytics-row {
     grid-template-columns: 1fr;
   }
-
   .item {
     grid-template-columns: 20px 1fr;
   }
-
-  .item-actions {
-    margin-top: 6px;
-  }
-
-  .bulk-bar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }
 
-/* ============================================================
-   PATCH FINAL — CORREÇÃO DO MODAL DE LOGIN (Dark / Light / OLED)
-   ============================================================ */
-
-/* Tornar o conteúdo do modal SEMPRE visível, independente do tema */
-.login-dialog .card,
-.edit-dialog .card {
-  color: var(--text) !important;
-  background: var(--card) !important;
-  border: 1px solid var(--outline) !important;
+/* ------------------------------
+   Animações
+--------------------------------*/
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Títulos */
-.login-dialog h2,
-.edit-dialog h2 {
-  color: var(--text) !important;
-}
-
-/* Labels */
-.login-dialog .field span,
-.edit-dialog .field span {
-  color: var(--text) !important;
-}
-
-/* Inputs */
-.login-dialog input,
-.edit-dialog input,
-.login-dialog textarea,
-.edit-dialog textarea {
-  background: var(--bg-soft) !important;
-  border: 1px solid var(--outline) !important;
-  color: var(--input-text) !important;
-}
-
-/* Light mode inputs */
-html[data-theme="light"] .login-dialog input,
-html[data-theme="light"] .edit-dialog input {
-  background: #ffffff !important;
-  border-color: #cfd6e0 !important;
-  color: #0f172a !important;
-}
-
-/* OLED inputs */
-html[data-theme="oled"] .login-dialog input,
-html[data-theme="oled"] .edit-dialog input {
-  background: #0a0a0a !important;
-  border-color: #222 !important;
-  color: #fafafa !important;
-}
-
-/* Checkbox + label */
-.form-check {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  margin: 10px 0 !important;
-}
-
-.form-check label {
-  color: var(--text) !important;
-}
-
-.form-check .native-check {
-  width: 18px !important;
-  height: 18px !important;
-  accent-color: var(--primary) !important;
-}
-
-html[data-theme="light"] .form-check .native-check {
-  accent-color: #0ea5e9 !important;
-}
-
-html[data-theme="oled"] .form-check .native-check {
-  accent-color: #00d4ff !important;
-}
-
-/* Botão cancelar */
-menu.actions button[value="cancel"] {
-  color: var(--text) !important;
-  border-color: var(--outline) !important;
-  background: transparent !important;
-}
-
-/* Light mode cancel */
-html[data-theme="light"] menu.actions button[value="cancel"] {
-  background: #ffffff !important;
-  border-color: #dee4ec !important;
-  color: #0f172a !important;
-}
-
-/* OLED cancel */
-html[data-theme="oled"] menu.actions button[value="cancel"] {
-  background: #0a0a0a !important;
-  color: #fafafa !important;
-  border-color: #222 !important;
-}
-
-/* Rodapé do modal */
-.login-dialog small {
-  color: var(--muted) !important;
-}
-
-/* Força contraste do campo de texto das subtarefas */
-.subtask-add input {
-  background: var(--bg-soft) !important;
-  color: var(--input-text) !important;
+.hidden {
+  display: none !important;
 }

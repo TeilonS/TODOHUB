@@ -1,44 +1,52 @@
-/* theme.js — Controle de Tema Dark/Light/OLED */
+// js/theme.js
+// Controle de tema: dark / light / oled
 
-import { Storage } from "./storage.js";
+import { loadTheme, saveTheme } from './storage.js';
 
-export const Theme = (() => {
+const html = document.documentElement;
+const themeToggleBtn = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const metaTheme = document.querySelector('meta[name="theme-color"]');
 
-  const KEY = "theme";
-  const THEMES = ["dark", "light", "oled"];
+function applyTheme(theme) {
+  html.setAttribute('data-theme', theme);
 
-  const apply = (theme) => {
-    document.documentElement.setAttribute("data-theme", theme);
+  if (theme === 'light') {
+    if (themeIcon) themeIcon.textContent = '☀️';
+    metaTheme?.setAttribute('content', '#0ea5e9');
+  } else if (theme === 'oled') {
+    if (themeIcon) themeIcon.textContent = '🌑';
+    metaTheme?.setAttribute('content', '#000000');
+  } else {
+    // dark
+    if (themeIcon) themeIcon.textContent = '🌙';
+    metaTheme?.setAttribute('content', '#00bcd4');
+  }
+}
 
-    const icon = document.getElementById("themeIcon");
-    if (icon) {
-      const idx = THEMES.indexOf(theme);
-      const next = THEMES[(idx + 1) % THEMES.length];
-      icon.textContent =
-        next === "light" ? "☀️" :
-        next === "dark"  ? "🌙" :
-                           "🖤";
-    }
+function detectInitialTheme() {
+  const saved = loadTheme();
+  if (saved) return saved;
 
-    Storage.setPref(KEY, theme);
-  };
+  const prefersLight =
+    window.matchMedia &&
+    window.matchMedia('(prefers-color-scheme: light)').matches;
 
-  const get = () => Storage.getPref(KEY) || "dark";
+  return prefersLight ? 'light' : 'dark';
+}
 
-  const toggle = () => {
-    const current = get();
-    const idx = THEMES.indexOf(current);
-    const next = THEMES[(idx + 1) % THEMES.length];
-    apply(next);
-  };
+let currentTheme = detectInitialTheme();
+applyTheme(currentTheme);
 
-  const init = () => {
-    apply(get());
-    document.getElementById("themeToggle")?.addEventListener("click", toggle);
-  };
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener('click', () => {
+    // alterna dark -> light -> oled -> dark...
+    if (currentTheme === 'dark') currentTheme = 'light';
+    else if (currentTheme === 'light') currentTheme = 'oled';
+    else currentTheme = 'dark';
 
-  return { init, toggle, get };
+    applyTheme(currentTheme);
+    saveTheme(currentTheme);
+  });
+}
 
-})();
-
-document.addEventListener("DOMContentLoaded", Theme.init);

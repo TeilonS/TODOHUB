@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TodoHub — Lista de Tarefas</title>
 
   <!-- Cor da UI no mobile -->
@@ -11,9 +12,12 @@
   <!-- Manifest (PWA) -->
   <link rel="manifest" href="manifest.json" />
 
-  <!-- Fonte moderna -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
 
   <!-- Ícone -->
   <link rel="icon" href="./assets/logo/LogoTodoHub.png" type="image/png" />
@@ -27,7 +31,7 @@
 
 <body>
 
-  <!-- Loader -->
+  <!-- Loader global -->
   <div id="appLoader">
     <div class="spinner"></div>
   </div>
@@ -35,22 +39,49 @@
   <!-- Toasts -->
   <div id="toastStack"></div>
 
-  <!-- HEADER -->
+  <!-- ======================
+       HEADER
+  ========================= -->
   <header class="app-header" role="banner">
+
+    <!-- ======================
+         SIDEBAR RETRÁTIL
+    ========================= -->
+    <aside id="sidebar" class="sidebar" aria-label="Listas">
+      <div class="sidebar-header">
+        <button id="closeSidebar" class="icon-btn" aria-label="Fechar menu">✖</button>
+        <h3>Listas</h3>
+      </div>
+
+      <ul id="listContainer" class="sidebar-list">
+        <!-- As listas serão carregadas aqui via JS -->
+      </ul>
+
+      <button id="newListBtn" class="btn primary sidebar-new-btn">
+        + Nova Lista
+      </button>
+    </aside>
+
+    <!-- Botão mobile para abrir sidebar -->
+    <button id="openSidebar" class="sidebar-toggle" aria-label="Abrir menu">
+      ☰
+    </button>
 
     <!-- Logo -->
     <div class="brand">
-      <img src="./assets/logo/LogoTodoHub.png" alt="TodoHub logo" class="brand-logo">
+      <img src="./assets/logo/LogoTodoHub.png" alt="TodoHub" class="brand-logo" />
     </div>
 
-    <!-- Ações -->
+    <!-- Ações superiores -->
     <div class="header-actions">
+      <!-- Tema -->
       <button id="themeToggle" class="icon-btn" aria-label="Alternar tema">
         <span id="themeIcon">🌙</span>
       </button>
 
+      <!-- Menu usuário -->
       <div id="userMenu" class="user-menu">
-        <button id="userButton" class="user-chip">
+        <button id="userButton" class="user-chip" aria-haspopup="true">
           <span id="userAvatar" class="avatar">?</span>
         </button>
 
@@ -62,7 +93,8 @@
               <small id="userDropdownEmail">-</small>
             </div>
           </div>
-          <hr>
+          <hr />
+
           <button id="openLogin" class="dropdown-item">Trocar usuário</button>
           <button id="logoutBtn" class="dropdown-item danger">Sair</button>
         </div>
@@ -70,36 +102,45 @@
     </div>
   </header>
 
-  <!-- LOGIN -->
-  <dialog id="loginDialog" class="login-dialog">
-    <form id="loginForm" method="dialog" class="card">
-      <h2>Entrar no TodoHub</h2>
+  <!-- ======================
+     LOGIN (Supabase)
+========================= -->
+<dialog id="loginDialog" class="login-dialog">
+  <form id="loginForm" method="dialog" class="card">
+    <h2>Entrar no TodoHub</h2>
 
-      <label class="field">
-        <span>Nome</span>
-        <input type="text" id="loginName" required placeholder="Seu nome" />
-      </label>
+    <label class="field">
+      <span>Nome</span>
+      <input type="text" id="loginName" required placeholder="Seu nome" />
+    </label>
 
-      <label class="field">
-        <span>E-mail</span>
-        <input type="email" id="loginEmail" required placeholder="email@exemplo.com" />
-      </label>
+    <label class="field">
+      <span>E-mail</span>
+      <input type="email" id="loginEmail" required placeholder="email@exemplo.com" />
+    </label>
 
-      <div class="form-check">
-        <input type="checkbox" id="allowCollab" class="native-check" />
-        <label for="allowCollab">Permitir colaboração (futuro)</label>
-      </div>
+    <label class="field">
+      <span>Senha</span>
+      <input type="password" id="loginPassword" required placeholder="Sua senha (mín. 6 caracteres)" />
+    </label>
 
-      <menu class="actions">
-        <button value="cancel">Cancelar</button>
-        <button type="submit" class="primary">Entrar</button>
-      </menu>
+    <div class="form-check">
+      <input type="checkbox" id="allowCollab" class="native-check" />
+      <label for="allowCollab">Permitir colaboração (futuro)</label>
+    </div>
 
-      <small class="muted">* Seus dados ficam apenas neste navegador.</small>
-    </form>
-  </dialog>
+    <menu class="actions">
+      <button value="cancel">Cancelar</button>
+      <button type="submit" class="primary">Entrar</button>
+    </menu>
 
-  <!-- Edit Task Modal (tags + datas + subtarefas) -->
+    <small class="muted">* Sua conta é salva no Supabase.</small>
+  </form>
+</dialog>
+
+  <!-- ======================
+       MODAL: EDITAR TAREFA
+  ========================= -->
   <dialog id="editDialog" class="edit-dialog">
     <form id="editForm" method="dialog" class="card edit-card">
       <h2>Editar tarefa</h2>
@@ -152,12 +193,13 @@
     </form>
   </dialog>
 
-  <!-- MAIN -->
+  <!-- ======================
+       MAIN
+  ========================= -->
   <main class="container">
 
     <!-- Indicadores principais -->
     <section class="stats">
-
       <article class="stat-card">
         <div class="stat-icon">📋</div>
         <div>
@@ -181,10 +223,9 @@
           <div id="doneCount" class="stat-number">0</div>
         </div>
       </article>
-
     </section>
 
-    <!-- Dashboard extra -->
+    <!-- Dashboard / Analytics -->
     <section class="analytics card">
       <div class="analytics-row">
         <div class="analytics-item">
@@ -211,7 +252,6 @@
     <section class="add-task">
       <input id="taskInput" class="input" type="text" placeholder="O que precisa ser feito?" />
 
-      <!-- PRIORITY PICKER -->
       <div id="priorityPicker" class="priority-picker">
         <button type="button" data-priority="high" class="prio-btn">🔴</button>
         <button type="button" data-priority="medium" class="prio-btn active">🟡</button>
@@ -223,25 +263,21 @@
       </button>
     </section>
 
-    <!-- Filtros + Busca -->
+    <!-- Filtros -->
     <div class="toolbar">
       <div class="filters">
-
-        <!-- Estado -->
         <button class="chip active" data-filter-state="all">Todos</button>
         <button class="chip" data-filter-state="active">Ativas</button>
         <button class="chip" data-filter-state="done">Concluídas</button>
 
-        <!-- Prioridades -->
         <button class="chip prio-chip" data-filter-priority="high">🔴 Alta</button>
         <button class="chip prio-chip" data-filter-priority="medium">🟡 Média</button>
         <button class="chip prio-chip" data-filter-priority="low">🟢 Baixa</button>
-
       </div>
 
       <div class="search">
         <span>🔎</span>
-        <input id="searchInput" class="input" type="search" placeholder="Buscar..." data-search />
+        <input id="searchInput" class="input" type="search" placeholder="Buscar..." />
       </div>
     </div>
 
@@ -252,6 +288,7 @@
         <button id="selectionModeBtn" class="btn subtle">Selecionar tarefas</button>
         <span class="toolbar-hint">Atalho: Shift + S</span>
       </div>
+
       <div class="toolbar-right">
         <button id="exportJsonBtn" class="btn subtle">Exportar JSON</button>
         <button id="exportCsvBtn" class="btn subtle">Exportar CSV</button>
@@ -264,24 +301,28 @@
       </div>
     </div>
 
-    <!-- Barra de ações em lote -->
+    <!-- Ações em lote -->
     <div id="bulkBar" class="bulk-bar hidden">
       <div class="bulk-info">
         <span id="bulkCount">0 tarefas selecionadas</span>
         <button id="bulkExitBtn" class="btn subtle">Sair do modo seleção</button>
       </div>
+
       <div class="bulk-actions-buttons">
         <span class="bulk-label">Prioridade:</span>
+
         <button class="btn subtle bulk-prio" data-bulk-priority="high">Alta</button>
         <button class="btn subtle bulk-prio" data-bulk-priority="medium">Média</button>
         <button class="btn subtle bulk-prio" data-bulk-priority="low">Baixa</button>
+
         <span class="bulk-sep"></span>
+
         <button id="bulkDoneBtn" class="btn subtle">Marcar concluídas</button>
         <button id="bulkDeleteBtn" class="btn subtle">Excluir</button>
       </div>
     </div>
 
-    <!-- Lista -->
+    <!-- Lista de Tarefas -->
     <section class="task-list card">
       <ul id="taskList" class="list"></ul>
 
@@ -291,7 +332,6 @@
         <p class="muted">Adicione uma para começar!</p>
       </div>
     </section>
-
   </main>
 
   <!-- Rodapé -->
@@ -306,6 +346,7 @@
   <script src="./js/ui.js" type="module"></script>
   <script src="./js/main.js" type="module"></script>
   <script src="./js/sw-register.js" type="module"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 </body>
 </html>
