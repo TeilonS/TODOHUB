@@ -1,12 +1,16 @@
 // js/sw-register.js
-// Registro simples do Service Worker
+// Registro oficial do Service Worker do TodoHub
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('./service-worker.js')
-      .catch((err) => {
-        console.error('Falha ao registrar service worker:', err);
-      });
+const SW_PATH = "/sw.js";
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register(SW_PATH);
+
+      console.log("✔ Service Worker registrado:", reg.scope);
+    } catch (err) {
+      console.error("❌ Erro ao registrar o Service Worker:", err);
+    }
   });
 }

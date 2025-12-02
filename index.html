@@ -20,7 +20,7 @@
   />
 
   <!-- Ícone -->
-  <link rel="icon" href="./assets/logo/LogoTodoHub.png" type="image/png" />
+  <link rel="icon" href="./assets/logo/LogoTodoHub-192.png" type="image/png" />
 
   <!-- CSS principal -->
   <link rel="stylesheet" href="./css/style.css" />
@@ -53,28 +53,21 @@
         <h3>Listas</h3>
       </div>
 
-      <ul id="listContainer" class="sidebar-list">
-        <!-- As listas serão carregadas aqui via JS -->
-      </ul>
+      <ul id="listContainer" class="sidebar-list"></ul>
 
       <button id="newListBtn" class="btn primary sidebar-new-btn">
         + Nova Lista
       </button>
     </aside>
 
-    <!-- Botão mobile para abrir sidebar -->
-    <button id="openSidebar" class="sidebar-toggle" aria-label="Abrir menu">
-      ☰
-    </button>
+    <button id="openSidebar" class="sidebar-toggle" aria-label="Abrir menu">☰</button>
 
     <!-- Logo -->
     <div class="brand">
       <img src="./assets/logo/LogoTodoHub.png" alt="TodoHub" class="brand-logo" />
     </div>
 
-    <!-- Ações superiores -->
     <div class="header-actions">
-      <!-- Tema -->
       <button id="themeToggle" class="icon-btn" aria-label="Alternar tema">
         <span id="themeIcon">🌙</span>
       </button>
@@ -104,39 +97,34 @@
 
   <!-- ======================
      LOGIN (Supabase)
-========================= -->
-<dialog id="loginDialog" class="login-dialog">
-  <form id="loginForm" method="dialog" class="card">
-    <h2>Entrar no TodoHub</h2>
+  ========================= -->
+  <dialog id="loginDialog" class="login-dialog">
+    <form id="loginForm" method="dialog" class="card">
+      <h2>Entrar no TodoHub</h2>
 
-    <label class="field">
-      <span>Nome</span>
-      <input type="text" id="loginName" required placeholder="Seu nome" />
-    </label>
+      <label class="field">
+        <span>Nome</span>
+        <input type="text" id="loginName" required placeholder="Seu nome" />
+      </label>
 
-    <label class="field">
-      <span>E-mail</span>
-      <input type="email" id="loginEmail" required placeholder="email@exemplo.com" />
-    </label>
+      <label class="field">
+        <span>E-mail</span>
+        <input type="email" id="loginEmail" required placeholder="email@exemplo.com" />
+      </label>
 
-    <label class="field">
-      <span>Senha</span>
-      <input type="password" id="loginPassword" required placeholder="Sua senha (mín. 6 caracteres)" />
-    </label>
+      <label class="field">
+        <span>Senha</span>
+        <input type="password" id="loginPassword" required placeholder="Sua senha (mín. 6 caracteres)" />
+      </label>
 
-    <div class="form-check">
-      <input type="checkbox" id="allowCollab" class="native-check" />
-      <label for="allowCollab">Permitir colaboração (futuro)</label>
-    </div>
+      <menu class="actions">
+        <button value="cancel">Cancelar</button>
+        <button type="submit" class="primary">Entrar</button>
+      </menu>
 
-    <menu class="actions">
-      <button value="cancel">Cancelar</button>
-      <button type="submit" class="primary">Entrar</button>
-    </menu>
-
-    <small class="muted">* Sua conta é salva no Supabase.</small>
-  </form>
-</dialog>
+      <small class="muted">* Sua conta é salva no Supabase.</small>
+    </form>
+  </dialog>
 
   <!-- ======================
        MODAL: EDITAR TAREFA
@@ -163,28 +151,6 @@
         <span>Tags</span>
         <input type="text" id="editTags" placeholder="ex: estudo, urgente, trabalho" />
       </label>
-
-      <div class="field field-inline">
-        <div>
-          <span>Data limite</span>
-          <input type="date" id="editDueDate" />
-        </div>
-        <div>
-          <span>Horário</span>
-          <input type="time" id="editDueTime" />
-        </div>
-      </div>
-
-      <div class="field">
-        <span>Subtarefas</span>
-        <div id="subtasksContainer" class="subtask-editor">
-          <ul id="subtasksList" class="subtask-list modal-subtask-list"></ul>
-          <div class="subtask-add">
-            <input type="text" id="newSubtaskText" placeholder="Nova subtarefa" />
-            <button type="button" id="addSubtaskBtn">+</button>
-          </div>
-        </div>
-      </div>
 
       <menu class="actions">
         <button value="cancel">Cancelar</button>
@@ -225,7 +191,7 @@
       </article>
     </section>
 
-    <!-- Dashboard / Analytics -->
+    <!-- Dashboard -->
     <section class="analytics card">
       <div class="analytics-row">
         <div class="analytics-item">
@@ -248,7 +214,7 @@
       </div>
     </section>
 
-    <!-- Adicionar tarefa -->
+    <!-- Add Task -->
     <section class="add-task">
       <input id="taskInput" class="input" type="text" placeholder="O que precisa ser feito?" />
 
@@ -281,27 +247,7 @@
       </div>
     </div>
 
-    <!-- Ações extras -->
-    <div class="toolbar toolbar-bottom">
-      <div class="toolbar-left">
-        <button id="clearDoneBtn" class="btn subtle">🧹 Limpar concluídas</button>
-        <button id="selectionModeBtn" class="btn subtle">Selecionar tarefas</button>
-        <span class="toolbar-hint">Atalho: Shift + S</span>
-      </div>
-
-      <div class="toolbar-right">
-        <button id="exportJsonBtn" class="btn subtle">Exportar JSON</button>
-        <button id="exportCsvBtn" class="btn subtle">Exportar CSV</button>
-        <button id="exportExcelBtn" class="btn subtle">Exportar Excel</button>
-
-        <label class="btn subtle file-label">
-          Importar JSON
-          <input id="importJsonInput" type="file" accept="application/json" hidden />
-        </label>
-      </div>
-    </div>
-
-    <!-- Ações em lote -->
+    <!-- Bulk Actions -->
     <div id="bulkBar" class="bulk-bar hidden">
       <div class="bulk-info">
         <span id="bulkCount">0 tarefas selecionadas</span>
@@ -322,7 +268,7 @@
       </div>
     </div>
 
-    <!-- Lista de Tarefas -->
+    <!-- Tasks List -->
     <section class="task-list card">
       <ul id="taskList" class="list"></ul>
 
@@ -334,19 +280,25 @@
     </section>
   </main>
 
-  <!-- Rodapé -->
   <footer class="app-footer">
     <small>© <span id="year"></span> TodoHub — Teilon Oliveira Santos</small>
   </footer>
 
-  <!-- Scripts -->
-  <script src="./js/storage.js" type="module"></script>
-  <script src="./js/theme.js" type="module"></script>
-  <script src="./js/auth.js" type="module"></script>
-  <script src="./js/ui.js" type="module"></script>
-  <script src="./js/main.js" type="module"></script>
-  <script src="./js/sw-register.js" type="module"></script>
+  <!-- ======================
+       SCRIPTS (ORDEM FINAL)
+  ====================== -->
+
+  <!-- 1. Supabase CDN → necessário para supabase.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- 2. Módulos do app -->
+  <script type="module" src="./js/supabase.js"></script>
+  <script type="module" src="./js/storage.js"></script>
+  <script type="module" src="./js/theme.js"></script>
+  <script type="module" src="./js/auth.js"></script>
+  <script type="module" src="./js/ui.js"></script>
+  <script type="module" src="./js/main.js"></script>
+  <script type="module" src="./js/sw-register.js"></script>
 
 </body>
 </html>

@@ -1,23 +1,24 @@
 {
   "name": "TodoHub",
   "short_name": "TodoHub",
-  "description": "Gerencie suas tarefas com praticidade, tema claro/escuro e login local.",
-  "start_url": "/",
+  "description": "Seu gestor de tarefas com sincronização real-time.",
+  "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0d1117",
-  "theme_color": "#00bcd4",
   "orientation": "portrait",
+  "background_color": "#0d0d0d",
+  "theme_color": "#6C63FF",
   "icons": [
     {
-      "src": "./assets/logo/LogoTodoHub.png",
+      "src": "/assets/logo/LogoTodoHub-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "./assets/logo/LogoTodoHub.png",
+      "src": "/assets/logo/LogoTodoHub-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
   ]
 }
+

@@ -1,9 +1,11 @@
-// storage.js — versão híbrida (Supabase + localStorage fallback)
+// storage.js — Versão FINAL (híbrida: Supabase + Offline)
 
 import { Supabase } from "./supabase.js";
-import { Auth } from "./auth.js";
-import { UI } from "./ui.js";
+import { showToast } from "./ui.js";
 
+/* ===========================================
+   CONSTANTES LOCALSTORAGE
+=========================================== */
 const LS = {
   THEME: "todohub:theme",
   CURRENT_LIST: "todohub:currentList",
@@ -12,7 +14,7 @@ const LS = {
 };
 
 /* ===========================================
-   Funções utilitárias
+   HELPERS
 =========================================== */
 const safeJSON = (value, fallback) => {
   try { return value ? JSON.parse(value) : fallback; }
@@ -21,12 +23,19 @@ const safeJSON = (value, fallback) => {
 
 const isOnline = () => navigator.onLine;
 
+async function getUserId() {
+  const { data } = await Supabase.client.auth.getUser();
+  return data?.user?.id || null;
+}
+
 /* ===========================================
-   TEMA
+   EXPORT PRINCIPAL
 =========================================== */
 export const Storage = {
 
-  /* ---------------- TEMA ---------------- */
+  /* ====================
+       THEME
+  ==================== */
   loadTheme() {
     return localStorage.getItem(LS.THEME) || "dark";
   },
@@ -35,54 +44,64 @@ export const Storage = {
     localStorage.setItem(LS.THEME, theme);
   },
 
-
-  /* ===========================================
-      LISTAS — SUPABASE + OFFLINE
-  ============================================ */
+  /* ====================
+        LISTAS
+  ==================== */
 
   async loadLists() {
-    const user = await Auth.getUser?.();
-    if (!user || !isOnline()) {
+    const userId = await getUserId();
+
+    // Offline → usa cache local
+    if (!userId || !isOnline()) {
       return safeJSON(localStorage.getItem(LS.OFFLINE_LISTS), []);
     }
 
     const { data, error } = await Supabase.client
-      .from("lists")
+      .from("users_lists")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("created_at", { ascending: true });
 
     if (error) {
-      UI.toast("Erro ao carregar listas (offline mode)", "warn");
+      showToast("Erro ao carregar listas (modo offline)", "warn");
       return safeJSON(localStorage.getItem(LS.OFFLINE_LISTS), []);
     }
 
-    // cache local para offline
     localStorage.setItem(LS.OFFLINE_LISTS, JSON.stringify(data));
     return data;
   },
 
   async saveList(name) {
-    const user = await Auth.getUser?.();
-    if (!user) return null;
+    const userId = await getUserId();
+    if (!userId) return null;
 
+    // Se offline → salva local
     if (!isOnline()) {
-      UI.toast("Sem internet — lista salva offline", "warn");
+      showToast("Sem internet — lista salva offline", "warn");
+
       const offline = safeJSON(localStorage.getItem(LS.OFFLINE_LISTS), []);
-      const newList = { id: crypto.randomUUID(), name, user_id: user.id };
+      const newList = {
+        id: crypto.randomUUID(),
+        name,
+        user_id: userId,
+        created_at: new Date().toISOString()
+      };
+
       offline.push(newList);
       localStorage.setItem(LS.OFFLINE_LISTS, JSON.stringify(offline));
+
       return newList;
     }
 
+    // Online → Supabase
     const { data, error } = await Supabase.client
-      .from("lists")
-      .insert({ name, user_id: user.id })
+      .from("users_lists")
+      .insert({ name, user_id: userId })
       .select()
       .single();
 
     if (error) {
-      UI.toast("Erro ao salvar lista", "error");
+      showToast("Erro ao salvar lista", "error");
       return null;
     }
 
@@ -97,92 +116,93 @@ export const Storage = {
     return localStorage.getItem(LS.CURRENT_LIST);
   },
 
-
-  /* ===========================================
-      TAREFAS — SUPABASE + OFFLINE
-  ============================================ */
+  /* ====================
+        TAREFAS
+  ==================== */
 
   async loadTasks(listId) {
     if (!listId) return [];
 
-    const user = await Auth.getUser?.();
-    if (!user || !isOnline()) {
+    const userId = await getUserId();
+
+    // Offline
+    if (!userId || !isOnline()) {
       return safeJSON(localStorage.getItem(LS.OFFLINE_TASKS + listId), []);
     }
 
     const { data, error } = await Supabase.client
-      .from("tasks")
+      .from("users_tasks")
       .select("*")
+      .eq("user_id", userId)
       .eq("list_id", listId)
       .order("created_at", { ascending: true });
 
     if (error) {
-      UI.toast("Erro ao carregar tarefas (offline mode)", "warn");
+      showToast("Erro ao carregar tarefas (offline)", "warn");
       return safeJSON(localStorage.getItem(LS.OFFLINE_TASKS + listId), []);
     }
 
-    // cache
     localStorage.setItem(LS.OFFLINE_TASKS + listId, JSON.stringify(data));
     return data;
   },
 
   async saveTask(listId, task) {
-    const user = await Auth.getUser?.();
-    if (!user) return null;
+    const userId = await getUserId();
+    if (!userId) return null;
 
+    // Offline
     if (!isOnline()) {
-      UI.toast("Sem internet — tarefa salva offline", "warn");
+      showToast("Offline — tarefa salva localmente", "warn");
       const offline = safeJSON(localStorage.getItem(LS.OFFLINE_TASKS + listId), []);
       offline.push(task);
       localStorage.setItem(LS.OFFLINE_TASKS + listId, JSON.stringify(offline));
       return task;
     }
 
+    // Online → Supabase
     const { data, error } = await Supabase.client
-      .from("tasks")
+      .from("users_tasks")
       .insert({
         ...task,
-        list_id: listId,
-        user_id: user.id
+        user_id: userId,
+        list_id: listId
       })
       .select()
       .single();
 
     if (error) {
-      UI.toast("Erro ao salvar tarefa", "error");
+      showToast("Erro ao salvar tarefa", "error");
       return null;
     }
 
     return data;
   },
 
-  async updateTask(id, patch) {
+  async updateTask(taskId, patch) {
     if (!isOnline()) {
-      UI.toast("Sem internet — edição salva offline", "warn");
+      showToast("Offline — edição pendente", "warn");
       return;
     }
 
     const { error } = await Supabase.client
-      .from("tasks")
+      .from("users_tasks")
       .update(patch)
-      .eq("id", id);
+      .eq("id", taskId);
 
-    if (error) UI.toast("Erro ao atualizar tarefa", "error");
+    if (error) showToast("Erro ao atualizar", "error");
   },
 
-  async deleteTask(id) {
+  async deleteTask(taskId) {
     if (!isOnline()) {
-      UI.toast("Sem conexão — exclusão pendente", "warn");
+      showToast("Offline — exclusão pendente", "warn");
       return;
     }
 
     const { error } = await Supabase.client
-      .from("tasks")
+      .from("users_tasks")
       .delete()
-      .eq("id", id);
+      .eq("id", taskId);
 
-    if (error) UI.toast("Erro ao excluir", "error");
+    if (error) showToast("Erro ao excluir", "error");
   }
-
 };
-

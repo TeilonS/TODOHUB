@@ -1,68 +1,84 @@
 // js/ui.js
-// Utilitários de interface: loader, toast, ano do rodapé etc.
+// Utilitários de interface: loader, toast, ano do rodapé, helpers etc.
 
-const loaderEl = document.getElementById('appLoader');
-const toastStack = document.getElementById('toastStack');
-const yearEl = document.getElementById('year');
+// =======================
+// ELEMENTOS BASE
+// =======================
+const loaderEl = document.getElementById("appLoader");
+const toastStack = document.getElementById("toastStack");
+const yearEl = document.getElementById("year");
 
 if (yearEl) {
   yearEl.textContent = new Date().getFullYear();
 }
 
-/* ========== LOADER ========== */
+// =======================
+// LOADER
+// =======================
 export function showLoader() {
-  if (loaderEl) {
-    loaderEl.classList.remove('hidden');
+  try {
+    loaderEl?.classList.remove("hidden");
+  } catch (err) {
+    console.warn("Loader não encontrado:", err);
   }
 }
 
 export function hideLoader() {
-  if (loaderEl) {
-    loaderEl.classList.add('hidden');
+  try {
+    loaderEl?.classList.add("hidden");
+  } catch (err) {
+    console.warn("Loader não encontrado:", err);
   }
 }
 
-/* ========== TOASTS ========== */
-export function showToast(message, type = 'success', timeout = 2800) {
+// =======================
+// TOASTS
+// =======================
+/**
+ * Exibe um toast elegante
+ * @param {string} message - Texto do toast
+ * @param {"success"|"error"|"warn"|"info"} type
+ * @param {number} timeout
+ */
+export function showToast(message, type = "success", timeout = 2800) {
   if (!toastStack) return;
 
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
   toast.textContent = message;
 
   toastStack.appendChild(toast);
 
+  // Remove suavemente
   const hide = () => {
-    toast.style.animation = 'toastOut .25s forwards ease-out';
-    setTimeout(() => {
-      toast.remove();
-    }, 250);
+    toast.style.animation = "toastOut .25s forwards ease-out";
+    setTimeout(() => toast.remove(), 250);
   };
 
   setTimeout(hide, timeout);
 }
 
-/* ========== HELPERS GERAIS ========== */
+// =======================
+// HELPERS DE DATA
+// =======================
 export function formatDateLabel(dateStr, timeStr) {
-  if (!dateStr) return 'Sem prazo';
+  if (!dateStr) return "Sem prazo";
 
-  const [year, month, day] = dateStr.split('-').map(Number);
+  const [year, month, day] = dateStr.split("-").map(Number);
   const d = new Date(year, month - 1, day);
 
-  const dia = String(d.getDate()).padStart(2, '0');
-  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  if (isNaN(d.getTime())) return "Data inválida";
 
-  if (timeStr) {
-    return `${dia}/${mes} ${timeStr}`;
-  }
-  return `${dia}/${mes}`;
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+
+  return timeStr ? `${dd}/${mm} ${timeStr}` : `${dd}/${mm}`;
 }
 
 export function todayISODate() {
   const d = new Date();
   const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
-
