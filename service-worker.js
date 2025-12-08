@@ -1,3 +1,6 @@
+// Forçar atualização do SW
+self.skipWaiting();
+
 /* ============================================================
    sw.js — TodoHub Service Worker Oficial
    Cache inteligente + compatível com Supabase + Sync futuro
@@ -45,7 +48,7 @@ self.addEventListener("install", (event) => {
 });
 
 /* ============================================================
-   ACTIVATE
+   ACTIVATE — apenas UMA VEZ!
 ============================================================ */
 self.addEventListener("activate", (event) => {
   console.log("[SW] Ativo!");
@@ -68,7 +71,6 @@ self.addEventListener("activate", (event) => {
 ============================================================ */
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-
   const url = new URL(req.url);
 
   // 🚫 Nunca cachear requisições da API do Supabase
@@ -90,7 +92,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 /* ============================================================
-   BACKGROUND SYNC
+   BACKGROUND SYNC (não usado agora)
 ============================================================ */
 self.addEventListener("sync", (event) => {
   if (event.tag === "sync-tasks") {
@@ -98,10 +100,6 @@ self.addEventListener("sync", (event) => {
   }
 });
 
-/* ============================================================
-   Função futura para sincronização com servidor
-============================================================ */
 async function syncTasksWithServer() {
   console.log("🔄 Executando sincronização em background…");
-  // Aqui conectaremos tasks locais → Supabase
 }
